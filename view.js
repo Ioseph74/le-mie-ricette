@@ -623,7 +623,11 @@ var isTranslated = false;
 var originalRecipeData = null;
 
 async function translateRecipe() {
-    if (!ricettaCorrente) return;
+    console.log("translateRecipe called, ricettaCorrente:", !!ricettaCorrente);
+    if (!ricettaCorrente) {
+        mostraToast("No recipe loaded", "error");
+        return;
+    }
 
     // If already translated, show original
     if (isTranslated) {
@@ -633,6 +637,7 @@ async function translateRecipe() {
 
     var langNames = { en: "English", it: "Italian", fr: "French", de: "German", es: "Spanish" };
     var targetLang = langNames[currentLanguage] || "English";
+    console.log("Translating to:", targetLang);
 
     // Save original data
     originalRecipeData = {
@@ -642,7 +647,7 @@ async function translateRecipe() {
         note: ricettaCorrente.note
     };
 
-    mostraToast(t("translate.translating"), "info");
+    mostraToast(t("translate.translating"), "success");
 
     // Build the recipe text for translation
     var recipeText = "Title: " + ricettaCorrente.titolo + "\n\n";
