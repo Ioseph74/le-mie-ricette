@@ -156,20 +156,49 @@ async function importFromUrl() {
 
     var statusEl = document.getElementById("importStatus");
     statusEl.style.display = "block";
-    statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + t("import.loading");
+    statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + t("import.fetching");
 
     try {
-        var prompt = "You are a recipe extraction expert. I will give you a URL of a recipe webpage. " +
-            "Please fetch and analyze the content from this URL and extract the recipe data. " +
-            "Return ONLY a valid JSON object with this exact structure (no markdown, no explanation): " +
-            '{"titolo":"recipe name","categoria":"one of: antipasti,primi,secondi,contorni,dolci,pane-e-lievitati,salse-e-condimenti,bevande,conserve,base",' +
+        // Step 1: Fetch the webpage content via CORS proxy
+        var proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
+        var pageResponse = await fetch(proxyUrl);
+        if (!pageResponse.ok) {
+            throw new Error("Could not fetch webpage (HTTP " + pageResponse.status + ")");
+        }
+        var htmlContent = await pageResponse.text();
+
+        // Step 2: Extract text from HTML (remove scripts, styles, tags)
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(htmlContent, "text/html");
+        // Remove scripts and styles
+        var removeEls = doc.querySelectorAll("script, style, noscript, iframe, svg, nav, footer, header");
+        removeEls.forEach(function(el) { el.remove(); });
+        var pageText = doc.body ? doc.body.innerText || doc.body.textContent : "";
+        // Limit text to avoid token limits (keep first ~6000 chars which is plenty for a recipe)
+        if (pageText.length > 6000) {
+            pageText = pageText.substring(0, 6000);
+        }
+
+        if (!pageText || pageText.trim().length < 50) {
+            throw new Error("Could not extract text content from the webpage.");
+        }
+
+        statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + t("import.analyzing");
+
+        // Step 3: Send the actual page content to AI for extraction
+        var prompt = "You are a recipe extraction expert. Below is the TEXT CONTENT extracted from a recipe webpage. " +
+            "Extract the recipe data EXACTLY as written on the page. Do NOT invent or modify any data. " +
+            "Use ONLY information found in the text below. If some fields are not available, leave them as default values. " +
+            "Return ONLY a valid JSON object (no markdown, no explanation) with this exact structure: " +
+            '{"titolo":"recipe name from the page","categoria":"one of: antipasti,primi,secondi,contorni,dolci,pane-e-lievitati,salse-e-condimenti,bevande,conserve,base",' +
             '"difficolta":1,"tempoPreparazione":0,"tempoCottura":0,"porzioniOriginali":4,"pesoPorzione":0,' +
             '"ingredienti":[{"nome":"ingredient name","quantita":100,"unita":"g"}],' +
             '"preparazioni":[{"titolo":"Preparation","ingredientiUsati":[],"passi":[{"testo":"step text","foto":null}]}],' +
-            '"note":"any notes","valutazione":0}' +
-            "\n\nURL: " + url;
+            '"note":"any notes from the page","valutazione":0}' +
+            "\n\n--- WEBPAGE TEXT CONTENT ---\n" + pageText;
 
-        var response = await fetch(AI_ENDPOINT, {
+        var aiEndpoint = AI_ENDPOINT;
+        var response = await fetch(aiEndpoint, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -178,7 +207,7 @@ async function importFromUrl() {
             body: JSON.stringify({
                 model: AI_MODEL,
                 messages: [{ role: "user", content: prompt }],
-                temperature: 0.3,
+                temperature: 0.1,
                 max_tokens: 4096
             })
         });
@@ -203,8 +232,8 @@ async function importFromUrl() {
 
     } catch (error) {
         console.error("Import error:", error);
-        statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#e53e3e;"></i> ' + t("import.error");
-        setTimeout(function() { statusEl.style.display = "none"; }, 4000);
+        statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#e53e3e;"></i> ' + (error.message || t("import.error"));
+        setTimeout(function() { statusEl.style.display = "none"; }, 6000);
     }
 }
 

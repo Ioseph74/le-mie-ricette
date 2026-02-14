@@ -110,6 +110,8 @@ var translations = {
     "import.placeholder": { en: "Paste recipe URL...", it: "Incolla URL della ricetta...", fr: "Collez l'URL de la recette...", de: "Rezept-URL einfuegen...", es: "Pegar URL de la receta..." },
     "import.button": { en: "Import", it: "Importa", fr: "Importer", de: "Importieren", es: "Importar" },
     "import.loading": { en: "Importing recipe with AI...", it: "Importazione ricetta con AI...", fr: "Importation avec IA...", de: "Rezept wird mit KI importiert...", es: "Importando receta con IA..." },
+    "import.fetching": { en: "Fetching webpage content...", it: "Scaricamento contenuto pagina web...", fr: "Recuperation du contenu de la page...", de: "Webseite wird geladen...", es: "Descargando contenido de la pagina..." },
+    "import.analyzing": { en: "Analyzing recipe with AI...", it: "Analisi della ricetta con AI...", fr: "Analyse de la recette avec IA...", de: "Rezept wird mit KI analysiert...", es: "Analizando la receta con IA..." },
     "import.success": { en: "Recipe imported successfully!", it: "Ricetta importata con successo!", fr: "Recette importee avec succes!", de: "Rezept erfolgreich importiert!", es: "Receta importada con exito!" },
     "import.error": { en: "Error importing recipe. Check the URL and try again.", it: "Errore nell'importazione. Controlla l'URL e riprova.", fr: "Erreur d'importation. Verifiez l'URL et reessayez.", de: "Fehler beim Importieren. Ueberpruefen Sie die URL.", es: "Error al importar. Verifique la URL e intentelo de nuevo." },
     "import.enterUrl": { en: "Enter a valid URL", it: "Inserisci un URL valido", fr: "Entrez une URL valide", de: "Geben Sie eine gueltige URL ein", es: "Ingrese una URL valida" },
