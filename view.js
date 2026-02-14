@@ -676,18 +676,35 @@ async function translateRecipe() {
         recipeText += "\nNotes: " + ricettaCorrente.note + "\n";
     }
 
-    var prompt = "Translate the following recipe to " + targetLang + ". " +
-        "IMPORTANT: You MUST translate ALL items - every single ingredient name, every single step, every section title. Do NOT skip any. " +
-        "Return ONLY a valid JSON object (no markdown, no explanation) with this structure: " +
-        '{"titolo":"translated title",' +
-        '"ingredienti":["translated name for EACH ingredient, same count as original"],' +
-        '"sezioni":[{"titolo":"section title","ingredientiUsati":["name for EACH ingredient used"],"passi":["translated text for EACH step"]}],' +
-        '"note":"translated notes"}' +
-        "\n\nRules:\n- Translate ALL ingredients (there are " + ings.length + " ingredients)\n" +
-        "- Translate ALL steps in EVERY section\n" +
-        "- Keep quantities and units unchanged\n" +
-        "- The ingredienti array must have exactly " + ings.length + " items\n\n" +
-        recipeText;
+    // Build a simple numbered list for translation
+    var items = [];
+    items.push("TITLE: " + ricettaCorrente.titolo);
+    for (var i = 0; i < ings.length; i++) {
+        items.push("ING" + i + ": " + ings[i].nome);
+    }
+    for (var s = 0; s < preps.length; s++) {
+        items.push("SEC" + s + ": " + preps[s].titolo);
+        if (preps[s].ingredientiUsati) {
+            for (var j = 0; j < preps[s].ingredientiUsati.length; j++) {
+                items.push("SIU" + s + "_" + j + ": " + preps[s].ingredientiUsati[j].nome);
+            }
+        }
+        if (preps[s].passi) {
+            for (var p = 0; p < preps[s].passi.length; p++) {
+                var txt = typeof preps[s].passi[p] === "string" ? preps[s].passi[p] : preps[s].passi[p].testo;
+                items.push("STEP" + s + "_" + p + ": " + txt);
+            }
+        }
+    }
+    if (ricettaCorrente.note) {
+        items.push("NOTE: " + ricettaCorrente.note);
+    }
+
+    var prompt = "Translate the following items to " + targetLang + ". " +
+        "Keep the EXACT same format: each line starts with the same KEY followed by colon, then the translated text. " +
+        "Do NOT add or remove lines. Translate ONLY the text after the colon. " +
+        "Reply with ONLY the translated lines, nothing else.\n\n" +
+        items.join("\n");
 
     try {
         var response = await fetch(AI_ENDPOINT, {
@@ -699,8 +716,8 @@ async function translateRecipe() {
             body: JSON.stringify({
                 model: AI_MODEL,
                 messages: [{ role: "user", content: prompt }],
-                temperature: 0.2,
-                max_tokens: 8000
+                temperature: 0.1,
+                max_tokens: 4096
             })
         });
         var data = await response.json();
@@ -709,84 +726,70 @@ async function translateRecipe() {
         if (data.choices && data.choices[0] && data.choices[0].message) {
             risposta = data.choices[0].message.content;
         }
-        risposta = risposta.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
-        console.log("AI response length:", risposta.length);
-        
-        // Try to parse, with repair for truncated JSON
-        var translated;
-        try {
-            translated = JSON.parse(risposta);
-        } catch (parseErr) {
-            console.warn("JSON parse failed, attempting repair:", parseErr.message);
-            // Try to repair truncated JSON by closing open brackets
-            var repaired = risposta;
-            // Count open/close brackets
-            var openBraces = (repaired.match(/{/g) || []).length;
-            var closeBraces = (repaired.match(/}/g) || []).length;
-            var openBrackets = (repaired.match(/\[/g) || []).length;
-            var closeBrackets = (repaired.match(/\]/g) || []).length;
-            // Remove trailing incomplete string (after last complete element)
-            repaired = repaired.replace(/,\s*"[^"]*$/, ""); // trailing incomplete key
-            repaired = repaired.replace(/,\s*"[^"]*":\s*"[^"]*$/, ""); // trailing incomplete value
-            repaired = repaired.replace(/,\s*"[^"]*":\s*\[[^\]]*$/, ""); // trailing incomplete array
-            repaired = repaired.replace(/,\s*"[^"]*$/, ""); // another pattern
-            repaired = repaired.replace(/,\s*$/, ""); // trailing comma
-            // Close brackets
-            for (var b = 0; b < openBrackets - closeBrackets; b++) repaired += "]";
-            for (var b2 = 0; b2 < openBraces - closeBraces; b2++) repaired += "}";
-            try {
-                translated = JSON.parse(repaired);
-                console.log("JSON repair successful");
-            } catch (e2) {
-                throw parseErr; // throw original error
-            }
-        }
+        console.log("AI translate response:", risposta);
 
-        // Apply translations
-        if (translated.titolo) {
-            ricettaCorrente.titolo = translated.titolo;
-            document.getElementById("heroTitle").textContent = translated.titolo;
-            document.title = translated.titolo + " — " + t("app.title");
+        // Parse the line-based response
+        var lines = risposta.split("\n");
+        var translated = {};
+        for (var li = 0; li < lines.length; li++) {
+            var line = lines[li].trim();
+            if (!line) continue;
+            var colonIdx = line.indexOf(": ");
+            if (colonIdx === -1) continue;
+            var key = line.substring(0, colonIdx).trim();
+            var val = line.substring(colonIdx + 2).trim();
+            translated[key] = val;
+        }
+        console.log("Parsed translations:", Object.keys(translated).length, "items");
+
+        // Apply translations using KEY:VALUE format
+        if (translated["TITLE"]) {
+            ricettaCorrente.titolo = translated["TITLE"];
+            document.getElementById("heroTitle").textContent = translated["TITLE"];
+            document.title = translated["TITLE"] + " — " + t("app.title");
         }
 
         // Translate ingredient names
-        if (translated.ingredienti && translated.ingredienti.length > 0) {
-            var ingData = ingredientiCorretti || ingredientiOriginali;
-            for (var i = 0; i < Math.min(translated.ingredienti.length, ingData.length); i++) {
-                ingData[i].nome = translated.ingredienti[i];
+        var ingData = ingredientiCorretti || ingredientiOriginali;
+        for (var i = 0; i < ingData.length; i++) {
+            if (translated["ING" + i]) {
+                ingData[i].nome = translated["ING" + i];
             }
-            renderIngredienti();
         }
+        renderIngredienti();
 
         // Translate preparation sections
-        if (translated.sezioni && translated.sezioni.length > 0) {
-            var prepData = preparazioniCorrette || preparazioniOriginali;
-            for (var s = 0; s < Math.min(translated.sezioni.length, prepData.length); s++) {
-                var ts = translated.sezioni[s];
-                if (ts.titolo) prepData[s].titolo = ts.titolo;
-                if (ts.ingredientiUsati && prepData[s].ingredientiUsati) {
-                    for (var j = 0; j < Math.min(ts.ingredientiUsati.length, prepData[s].ingredientiUsati.length); j++) {
-                        prepData[s].ingredientiUsati[j].nome = ts.ingredientiUsati[j];
+        var prepData = preparazioniCorrette || preparazioniOriginali;
+        for (var s = 0; s < prepData.length; s++) {
+            if (translated["SEC" + s]) {
+                prepData[s].titolo = translated["SEC" + s];
+            }
+            if (prepData[s].ingredientiUsati) {
+                for (var j = 0; j < prepData[s].ingredientiUsati.length; j++) {
+                    if (translated["SIU" + s + "_" + j]) {
+                        prepData[s].ingredientiUsati[j].nome = translated["SIU" + s + "_" + j];
                     }
                 }
-                if (ts.passi && prepData[s].passi) {
-                    for (var p = 0; p < Math.min(ts.passi.length, prepData[s].passi.length); p++) {
+            }
+            if (prepData[s].passi) {
+                for (var p = 0; p < prepData[s].passi.length; p++) {
+                    if (translated["STEP" + s + "_" + p]) {
                         if (typeof prepData[s].passi[p] === "string") {
-                            prepData[s].passi[p] = ts.passi[p];
+                            prepData[s].passi[p] = translated["STEP" + s + "_" + p];
                         } else {
-                            prepData[s].passi[p].testo = ts.passi[p];
+                            prepData[s].passi[p].testo = translated["STEP" + s + "_" + p];
                         }
                     }
                 }
             }
-            renderPreparazioni();
         }
+        renderPreparazioni();
 
         // Translate notes
-        if (translated.note && ricettaCorrente.note) {
-            ricettaCorrente.note = translated.note;
+        if (translated["NOTE"] && ricettaCorrente.note) {
+            ricettaCorrente.note = translated["NOTE"];
             var noteText = document.getElementById("noteText");
-            if (noteText) noteText.textContent = translated.note;
+            if (noteText) noteText.textContent = translated["NOTE"];
         }
 
         isTranslated = true;
