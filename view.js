@@ -677,11 +677,16 @@ async function translateRecipe() {
     }
 
     var prompt = "Translate the following recipe to " + targetLang + ". " +
-        "Return ONLY a valid JSON object (no markdown, no explanation) with this exact structure: " +
-        '{"titolo":"translated title","ingredienti":["translated name 1","translated name 2"],' +
-        '"sezioni":[{"titolo":"translated section title","ingredientiUsati":["translated name"],"passi":["translated step text"]}],' +
+        "IMPORTANT: You MUST translate ALL items - every single ingredient name, every single step, every section title. Do NOT skip any. " +
+        "Return ONLY a valid JSON object (no markdown, no explanation) with this structure: " +
+        '{"titolo":"translated title",' +
+        '"ingredienti":["translated name for EACH ingredient, same count as original"],' +
+        '"sezioni":[{"titolo":"section title","ingredientiUsati":["name for EACH ingredient used"],"passi":["translated text for EACH step"]}],' +
         '"note":"translated notes"}' +
-        "\n\nKeep quantities and units unchanged. Translate ONLY the text names and descriptions.\n\n" +
+        "\n\nRules:\n- Translate ALL ingredients (there are " + ings.length + " ingredients)\n" +
+        "- Translate ALL steps in EVERY section\n" +
+        "- Keep quantities and units unchanged\n" +
+        "- The ingredienti array must have exactly " + ings.length + " items\n\n" +
         recipeText;
 
     try {
@@ -695,7 +700,7 @@ async function translateRecipe() {
                 model: AI_MODEL,
                 messages: [{ role: "user", content: prompt }],
                 temperature: 0.2,
-                max_tokens: 4096
+                max_tokens: 8000
             })
         });
         var data = await response.json();
