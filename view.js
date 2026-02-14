@@ -188,6 +188,7 @@ function formattaQtaCalc(n) {
 function switchUnits(system) {
     setUnitSystem(system);
     document.getElementById("unitToggleContainer").innerHTML = buildUnitToggleHtml();
+    renderCalcolo();
     renderIngredienti();
     renderPreparazioni();
 }
@@ -223,16 +224,37 @@ function renderHero() {
 // ========================================
 
 function renderCalcolo() {
+    var weightUnit = "g";
+    var displayPeso = pesoOriginalePorzione;
+    if (currentUnitSystem === "imperial" && pesoOriginalePorzione > 0) {
+        var converted = convertUnit(pesoOriginalePorzione, "g", "imperial");
+        displayPeso = converted.value;
+        weightUnit = converted.unit;
+    }
+
     document.getElementById("porzioniOriginaliView").textContent = porzioniOriginali;
     if (pesoOriginalePorzione > 0) {
-        document.getElementById("pesoOriginaleView").textContent = pesoOriginalePorzione + " g";
-        document.getElementById("pesoTotaleOriginaleView").textContent = (porzioniOriginali * pesoOriginalePorzione) + " g";
+        document.getElementById("pesoOriginaleView").textContent = displayPeso + " " + weightUnit;
+        var totalOrig = currentUnitSystem === "imperial"
+            ? Math.round(displayPeso * porzioniOriginali * 100) / 100
+            : porzioniOriginali * pesoOriginalePorzione;
+        document.getElementById("pesoTotaleOriginaleView").textContent = totalOrig + " " + weightUnit;
     } else {
         document.getElementById("pesoOriginaleView").textContent = t("view.na");
         document.getElementById("pesoTotaleOriginaleView").textContent = t("view.na");
     }
-    document.getElementById("porzioniDesiderate").value = porzioniOriginali;
-    if (pesoOriginalePorzione > 0) document.getElementById("pesoDesiderato").value = pesoOriginalePorzione;
+
+    // Update labels with current unit
+    var lblDW = document.getElementById("calcDesWeight");
+    if (lblDW) lblDW.textContent = t("view.servingWeight").replace("(g)", "(" + weightUnit + ")");
+
+    document.getElementById("porzioniDesiderate").value = parseInt(document.getElementById("porzioniDesiderate").value) || porzioniOriginali;
+    if (pesoOriginalePorzione > 0) {
+        var currentDesired = parseInt(document.getElementById("pesoDesiderato").value);
+        if (!currentDesired || currentDesired === pesoOriginalePorzione || (currentUnitSystem === "imperial" && currentDesired === Math.round(displayPeso))) {
+            document.getElementById("pesoDesiderato").value = Math.round(displayPeso);
+        }
+    }
     aggiornaCalcolo();
 }
 
@@ -240,7 +262,8 @@ function aggiornaCalcolo() {
     var porzioni = parseInt(document.getElementById("porzioniDesiderate").value) || 0;
     var peso = parseInt(document.getElementById("pesoDesiderato").value) || 0;
     var totale = porzioni * peso;
-    document.getElementById("pesoTotaleNuovoView").textContent = totale > 0 ? totale + " g" : "— g";
+    var weightUnit = currentUnitSystem === "imperial" ? "oz" : "g";
+    document.getElementById("pesoTotaleNuovoView").textContent = totale > 0 ? totale + " " + weightUnit : "— " + weightUnit;
 }
 
 function stepPorzioni(delta) {
@@ -253,17 +276,25 @@ function stepPorzioni(delta) {
 
 function ricalcolaCombinato() {
     var porzioniDes = parseInt(document.getElementById("porzioniDesiderate").value);
-    var pesoDes = parseInt(document.getElementById("pesoDesiderato").value);
+    var pesoDes = parseFloat(document.getElementById("pesoDesiderato").value);
     if (!porzioniDes || porzioniDes < 1) { mostraToast(t("toast.enterServings"), "error"); return; }
+
+    // Convert desired weight back to grams if in imperial mode
+    var pesoDesGrams = pesoDes;
+    if (currentUnitSystem === "imperial" && pesoDes > 0) {
+        var converted = convertUnit(pesoDes, "oz", "metric");
+        pesoDesGrams = converted.value;
+    }
+
     var fattore;
-    if (!pesoDes || pesoDes <= 0 || pesoOriginalePorzione <= 0) {
+    if (!pesoDesGrams || pesoDesGrams <= 0 || pesoOriginalePorzione <= 0) {
         fattore = porzioniDes / porzioniOriginali;
         isRicalcolato = porzioniDes !== porzioniOriginali;
     } else {
         var pesoTotaleOrig = porzioniOriginali * pesoOriginalePorzione;
-        var pesoTotaleDes = porzioniDes * pesoDes;
+        var pesoTotaleDes = porzioniDes * pesoDesGrams;
         fattore = pesoTotaleDes / pesoTotaleOrig;
-        isRicalcolato = (porzioniDes !== porzioniOriginali || pesoDes !== pesoOriginalePorzione);
+        isRicalcolato = true;
     }
     ingredientiCorretti = applicaFattoreArray(ingredientiOriginali, fattore);
     preparazioniCorrette = applicaFattorePreparazioni(preparazioniOriginali, fattore);
@@ -278,7 +309,15 @@ function resetDosi() {
     preparazioniCorrette = JSON.parse(JSON.stringify(preparazioniOriginali));
     isRicalcolato = false;
     document.getElementById("porzioniDesiderate").value = porzioniOriginali;
-    document.getElementById("pesoDesiderato").value = pesoOriginalePorzione > 0 ? pesoOriginalePorzione : "";
+    if (pesoOriginalePorzione > 0) {
+        var resetPeso = pesoOriginalePorzione;
+        if (currentUnitSystem === "imperial") {
+            resetPeso = convertUnit(pesoOriginalePorzione, "g", "imperial").value;
+        }
+        document.getElementById("pesoDesiderato").value = Math.round(resetPeso);
+    } else {
+        document.getElementById("pesoDesiderato").value = "";
+    }
     aggiornaCalcolo();
     renderIngredienti();
     renderPreparazioni();
