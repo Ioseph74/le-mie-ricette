@@ -770,7 +770,13 @@ async function translateRecipe() {
 
     } catch (error) {
         console.error("Translation error:", error);
-        mostraToast(t("translate.error"), "error");
+        console.error("Error message:", error.message);
+        console.error("Error stack:", error.stack);
+        var errMsg = t("translate.error");
+        if (error && error.message) {
+            errMsg += " (" + error.message + ")";
+        }
+        mostraToast(errMsg, "error");
     }
 }
 
