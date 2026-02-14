@@ -20,7 +20,7 @@ var preparazioni = [
 
 // AI config for import
 var AI_API_KEY = "AIzaSyDAdcO68x4L73T7qgBlmPlitOBh7J58SQM";
-var AI_MODEL = "gemini-2.5-flash";
+var AI_MODEL = "gemini-2.0-flash";
 var AI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/" + AI_MODEL + ":generateContent?key=" + AI_API_KEY;
 
 // ========================================

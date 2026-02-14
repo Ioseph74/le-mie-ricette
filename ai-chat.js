@@ -3,7 +3,7 @@
 // ========================================
 
 var AI_CHAT_API_KEY = "AIzaSyDAdcO68x4L73T7qgBlmPlitOBh7J58SQM";
-var AI_CHAT_MODEL = "gemini-2.5-flash";
+var AI_CHAT_MODEL = "gemini-2.0-flash";
 var AI_CHAT_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/" + AI_CHAT_MODEL + ":generateContent?key=" + AI_CHAT_API_KEY;
 
 var aiConversation = [];
