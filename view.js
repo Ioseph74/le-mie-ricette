@@ -544,17 +544,35 @@ async function calculateNutrition() {
             })
         });
         var data = await response.json();
+        if (!response.ok) {
+            var apiMsg = (data.error && data.error.message) ? data.error.message : "API Error " + response.status;
+            if (response.status === 429) {
+                throw new Error("QUOTA: " + apiMsg);
+            }
+            throw new Error(apiMsg);
+        }
         var risposta = "";
         if (data.candidates && data.candidates[0] && data.candidates[0].content) {
             risposta = data.candidates[0].content.parts[0].text;
         }
+        if (!risposta) throw new Error("Empty AI response");
         risposta = risposta.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
         var nutrition = JSON.parse(risposta);
         renderNutrition(nutrition);
     } catch (error) {
         console.error("Nutrition error:", error);
-        container.innerHTML = '<p style="color:#e53e3e;">Error calculating nutrition.</p>' +
-            '<button class="btn-primary btn-nutrition" onclick="calculateNutrition()"><i class="fas fa-calculator"></i> ' + t("nutrition.calculate") + '</button>';
+        var errMsg = "Error calculating nutrition.";
+        if (error && error.message) {
+            if (error.message.indexOf("QUOTA") !== -1 || error.message.indexOf("429") !== -1 || error.message.indexOf("quota") !== -1) {
+                errMsg = "⚠️ API quota exceeded. The free tier limit has been reached. Please wait a few minutes or update your API key in api-config.js.";
+            } else if (error.message.indexOf("API key") !== -1 || error.message.indexOf("403") !== -1) {
+                errMsg = "⚠️ Invalid API key. Please check api-config.js.";
+            } else {
+                errMsg = "⚠️ " + error.message;
+            }
+        }
+        container.innerHTML = '<p style="color:#e53e3e;">' + errMsg + '</p>' +
+            '<button class="btn-primary btn-nutrition" onclick="calculateNutrition()" style="margin-top:12px;"><i class="fas fa-redo"></i> ' + t("nutrition.calculate") + '</button>';
     }
 }
 

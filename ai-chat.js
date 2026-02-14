@@ -3,7 +3,6 @@
 // ========================================
 
 // Uses AI_API_KEY, AI_MODEL, AI_ENDPOINT from api-config.js
-var AI_CHAT_ENDPOINT = AI_ENDPOINT;
 
 var aiConversation = [];
 var aiIsLoading = false;
@@ -136,7 +135,7 @@ function inviaMessaggioAi(testo) {
         });
     }
 
-    fetch(AI_CHAT_ENDPOINT, {
+    fetch(AI_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -144,7 +143,14 @@ function inviaMessaggioAi(testo) {
             generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
         })
     })
-    .then(function(response) { return response.json(); })
+    .then(function(response) {
+        if (!response.ok) {
+            return response.json().then(function(errData) {
+                throw { apiError: true, status: response.status, data: errData };
+            });
+        }
+        return response.json();
+    })
     .then(function(data) {
         mostraAiLoading(false);
 
@@ -152,7 +158,7 @@ function inviaMessaggioAi(testo) {
         if (data.candidates && data.candidates[0] && data.candidates[0].content) {
             risposta = data.candidates[0].content.parts[0].text;
         } else if (data.error) {
-            risposta = "Error: " + data.error.message;
+            risposta = "⚠️ API Error: " + data.error.message;
         } else {
             risposta = "Sorry, I could not generate a response. Please try again.";
         }
@@ -163,7 +169,17 @@ function inviaMessaggioAi(testo) {
     .catch(function(error) {
         mostraAiLoading(false);
         console.error("AI Error:", error);
-        aiConversation.push({ role: "ai", text: "Connection error. Check your internet connection and try again." });
+        var msg = "Connection error. Check your internet connection and try again.";
+        if (error && error.apiError) {
+            if (error.status === 429) {
+                msg = "⚠️ API quota exceeded. The free tier limit has been reached. Please wait a few minutes or check your API key configuration in api-config.js.";
+            } else if (error.status === 403) {
+                msg = "⚠️ API key error. Please check your API key in api-config.js.";
+            } else if (error.data && error.data.error) {
+                msg = "⚠️ API Error (" + error.status + "): " + error.data.error.message;
+            }
+        }
+        aiConversation.push({ role: "ai", text: msg });
         renderMessaggiAi();
     });
 }
