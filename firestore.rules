@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Recipes collection
+    match /ricette/{ricettaId} {
+
+      // Anyone can read recipes (public app)
+      allow read: if true;
+
+      // Only authenticated users can create recipes
+      allow create: if request.auth != null
+                    && request.resource.data.autore == request.auth.uid;
+
+      // Only the author can update or delete their recipes
+      allow update, delete: if request.auth != null
+                            && resource.data.autore == request.auth.uid;
+    }
+
+    // Comments collection
+    match /commenti/{commentId} {
+
+      // Anyone can read comments
+      allow read: if true;
+
+      // Only authenticated users can create comments
+      allow create: if request.auth != null
+                    && request.resource.data.autoreUid == request.auth.uid;
+
+      // Only the comment author can delete their comments
+      allow delete: if request.auth != null
+                    && resource.data.autoreUid == request.auth.uid;
+
+      // Comments cannot be updated (only created or deleted)
+      allow update: if false;
+    }
+
+    // Deny access to everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

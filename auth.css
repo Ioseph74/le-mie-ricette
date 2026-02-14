@@ -1,0 +1,99 @@
+/* ========================================
+   AUTENTICAZIONE - STILI
+   ======================================== */
+
+.btn-login {
+    background: white;
+    color: var(--text);
+    border: 2px solid var(--border);
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all var(--transition);
+    white-space: nowrap;
+}
+
+.btn-login:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.btn-login img {
+    width: 18px;
+    height: 18px;
+}
+
+.btn-logout {
+    background: none;
+    color: var(--text-light);
+    border: none;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all var(--transition);
+}
+
+.btn-logout:hover {
+    color: #e53e3e;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+}
+
+.user-name {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.login-required-msg {
+    text-align: center;
+    padding: 60px 24px;
+    color: var(--text-light);
+}
+
+.login-required-msg i {
+    font-size: 3rem;
+    color: #ddd;
+    margin-bottom: 16px;
+}
+
+.login-required-msg h2 {
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.login-required-msg p {
+    margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .user-name {
+        display: none;
+    }
+
+    .btn-login span {
+        display: none;
+    }
+}

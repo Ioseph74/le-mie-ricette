@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
+    <link rel="stylesheet" href="style.css?v=7">
+    <link rel="stylesheet" href="view.css?v=7">
+    <link rel="stylesheet" href="auth.css?v=7">
+    <link rel="stylesheet" href="ai-chat.css?v=7">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="i18n.js"></script>
+</head>
+<body>
+
+    <noscript>
+        <div style="text-align:center;padding:60px 24px;font-family:sans-serif;">
+            <h2>JavaScript Required</h2>
+            <p>This application requires JavaScript to function. Please enable it in your browser settings.</p>
+        </div>
+    </noscript>
+
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="back-link">
+                <i class="fas fa-arrow-left"></i> <span id="backTitle">My Recipes</span>
+            </a>
+            <div class="header-actions">
+                <button class="btn-icon" onclick="condividi()" title="Share" aria-label="Share recipe">
+                    <i class="fas fa-share-alt"></i>
+                </button>
+                <button class="btn-icon" onclick="esportaPDF()" title="Print PDF" aria-label="Export PDF">
+                    <i class="fas fa-file-pdf"></i>
+                </button>
+                <button class="btn-icon auth-only" onclick="modificaRicetta()" title="Edit" aria-label="Edit recipe">
+                    <i class="fas fa-pen"></i>
+                </button>
+                <button class="btn-icon auth-only" onclick="confermaElimina()" title="Delete" aria-label="Delete recipe">
+                    <i class="fas fa-trash"></i>
+                </button>
+
+                <div id="langSelectorContainer"></div>
+
+                <!-- AUTH -->
+                <div class="user-info" id="userInfo" style="display:none;">
+                    <img class="user-avatar" id="userAvatar" src="" alt="User avatar">
+                </div>
+                <button class="btn-login" id="loginBtn" onclick="login()" style="display:none;" aria-label="Sign in with Google">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                    <span id="loginText">Sign in</span>
+                </button>
+                <button class="btn-logout" id="logoutBtn" onclick="logout()" style="display:none;" title="Sign out" aria-label="Sign out">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="view-main" id="viewMain">
+
+        <section class="hero" id="heroSection">
+            <div class="hero-img" id="heroImg">
+                <div class="placeholder-icon"><i class="fas fa-utensils"></i></div>
+            </div>
+            <div class="hero-info">
+                <span class="hero-category" id="heroCategory"></span>
+                <h1 class="hero-title" id="heroTitle">Loading...</h1>
+                <div class="hero-stars" id="heroStars"></div>
+                <div class="hero-meta">
+                    <div class="meta-item" id="metaTempo"><i class="far fa-clock"></i><span>—</span></div>
+                    <div class="meta-item" id="metaDifficolta"><i class="fas fa-signal"></i><span>—</span></div>
+                    <div class="meta-item" id="metaPortate"><i class="fas fa-users"></i><span>—</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- UNIT TOGGLE -->
+        <div class="unit-toggle-container" id="unitToggleContainer"></div>
+
+        <section class="calc-section">
+            <h3 class="calc-title"><i class="fas fa-balance-scale"></i> <span id="calcTitle">Recalculate Doses</span></h3>
+            <div class="calc-grid">
+                <div class="calc-col">
+                    <div class="calc-col-header" id="calcOrigHeader">Original recipe</div>
+                    <div class="calc-field"><label id="calcOrigServings">Servings</label><span class="calc-original" id="porzioniOriginaliView">—</span></div>
+                    <div class="calc-field"><label id="calcOrigWeight">Serving weight</label><span class="calc-original" id="pesoOriginaleView">— g</span></div>
+                    <div class="calc-field"><label id="calcOrigTotal">Total weight</label><span class="calc-original" id="pesoTotaleOriginaleView">— g</span></div>
+                </div>
+                <div class="calc-arrow"><i class="fas fa-arrow-right"></i></div>
+                <div class="calc-col calc-col-edit">
+                    <div class="calc-col-header" id="calcYouWant">You want</div>
+                    <div class="calc-field"><label id="calcDesServings">Servings</label>
+                        <div class="calc-stepper">
+                            <button onclick="stepPorzioni(-1)" aria-label="Decrease servings"><i class="fas fa-minus"></i></button>
+                            <input type="number" id="porzioniDesiderate" value="1" min="1" onchange="aggiornaCalcolo()">
+                            <button onclick="stepPorzioni(1)" aria-label="Increase servings"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                    <div class="calc-field"><label id="calcDesWeight">Serving weight (g)</label><input type="number" id="pesoDesiderato" placeholder="—" min="1" class="calc-input-small" onchange="aggiornaCalcolo()"></div>
+                    <div class="calc-field"><label id="calcDesTotal">Total weight</label><span class="calc-result" id="pesoTotaleNuovoView">— g</span></div>
+                </div>
+            </div>
+            <button class="btn-primary btn-calc" onclick="ricalcolaCombinato()" id="btnRecalc"><i class="fas fa-calculator"></i> <span>Recalculate</span></button>
+            <button class="btn-reset" id="btnReset" style="display:none;" onclick="resetDosi()"><i class="fas fa-undo"></i> <span>Reset to original doses</span></button>
+        </section>
+
+        <div class="view-columns">
+            <div class="view-col">
+                <section class="view-section">
+                    <div class="section-header-view">
+                        <h2><i class="fas fa-list"></i> <span id="viewIngTitle">Ingredients</span></h2>
+                        <button class="btn-add-spesa" onclick="aggiungiTuttiAllaSpesa()" aria-label="Add all ingredients to shopping list" id="btnAddSpesa"><i class="fas fa-cart-plus"></i> <span>Add to shopping list</span></button>
+                    </div>
+                    <div id="ingredientiView"></div>
+                </section>
+
+                <!-- NUTRITION -->
+                <section class="view-section nutrition-section" id="nutritionSection">
+                    <div class="section-header-view">
+                        <h2><i class="fas fa-heartbeat"></i> <span id="nutritionTitle">Nutrition per serving</span></h2>
+                    </div>
+                    <div id="nutritionContent">
+                        <button class="btn-primary btn-nutrition" onclick="calculateNutrition()" id="btnCalcNutrition">
+                            <i class="fas fa-calculator"></i> <span>Calculate Nutrition</span>
+                        </button>
+                    </div>
+                </section>
+            </div>
+            <div class="view-col">
+                <section class="view-section" id="preparazioneView"></section>
+                <section class="view-section" id="preparazioneFinaleView" style="display:none;"></section>
+                <section class="view-section" id="noteView" style="display:none;">
+                    <h2><i class="fas fa-sticky-note"></i> <span id="viewNotesTitle">Notes</span></h2>
+                    <p class="note-text" id="noteText"></p>
+                </section>
+            </div>
+        </div>
+
+        <!-- COMMENTS SECTION -->
+        <section class="view-section comments-section" id="commentsSection">
+            <h2><i class="fas fa-comments"></i> <span id="commentsTitle">Comments & Ratings</span></h2>
+            <div class="comment-form" id="commentForm">
+                <div class="comment-rating" id="commentRating">
+                    <span id="commentRateLabel">Your rating:</span>
+                    <div class="comment-stars" id="commentStars">
+                        <i class="fas fa-star" data-value="1"></i>
+                        <i class="fas fa-star" data-value="2"></i>
+                        <i class="fas fa-star" data-value="3"></i>
+                        <i class="fas fa-star" data-value="4"></i>
+                        <i class="fas fa-star" data-value="5"></i>
+                    </div>
+                </div>
+                <textarea id="commentText" placeholder="Write a comment..." rows="3"></textarea>
+                <button class="btn-primary" onclick="submitComment()" id="btnSubmitComment">
+                    <i class="fas fa-paper-plane"></i> <span>Submit</span>
+                </button>
+            </div>
+            <div class="comment-login-msg" id="commentLoginMsg" style="display:none;">
+                <i class="fas fa-lock"></i> <span>Sign in to comment</span>
+            </div>
+            <div id="commentsList" class="comments-list"></div>
+        </section>
+    </main>
+
+    <div class="shopping-overlay" id="shoppingOverlay"></div>
+    <aside class="shopping-panel" id="shoppingPanel">
+        <div class="shopping-header">
+            <h2><i class="fas fa-shopping-cart"></i> <span id="shopTitle">Shopping List</span></h2>
+            <button class="btn-close" onclick="toggleShopping()" aria-label="Close shopping list"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="shopping-list" id="shoppingList"><p class="shopping-empty">The list is empty</p></div>
+        <div class="shopping-actions">
+            <button class="btn-secondary" onclick="clearShopping()" id="btnShopClear"><i class="fas fa-trash"></i> <span>Clear</span></button>
+            <button class="btn-primary" onclick="printShopping()" id="btnShopPrint"><i class="fas fa-print"></i> <span>Print</span></button>
+        </div>
+    </aside>
+
+    <button class="fab-shopping" id="fabShopping" onclick="toggleShopping()" aria-label="Open shopping list">
+        <i class="fas fa-shopping-cart"></i>
+        <span class="fab-badge" id="fabBadge" style="display:none;">0</span>
+    </button>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h3><i class="fas fa-exclamation-triangle" style="color: #e53e3e;"></i> <span id="modalDeleteTitle">Delete Recipe</span></h3>
+            <p id="modalDeleteMsg">Are you sure you want to delete this recipe? This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="chiudiModal()" id="modalCancelBtn">Cancel</button>
+                <button class="btn-danger" onclick="eseguiElimina()" id="modalDeleteBtn"><i class="fas fa-trash"></i> <span>Delete</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI CHAT -->
+    <div class="ai-overlay" id="aiOverlay" onclick="toggleAiChat()"></div>
+    <div class="ai-panel" id="aiPanel">
+        <div class="ai-header">
+            <div class="ai-header-title">
+                <div class="ai-icon"><i class="fas fa-robot"></i></div>
+                <span id="aiHeaderTitle">AI Chef Assistant</span>
+            </div>
+            <button class="btn-close" onclick="toggleAiChat()" aria-label="Close AI assistant"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="ai-suggestions" id="aiSuggestions"></div>
+        <div class="ai-messages" id="aiMessages">
+            <div class="ai-welcome">
+                <div style="font-size:2.5rem;margin-bottom:8px;">🧑‍🍳</div>
+                <h3 id="aiWelcomeTitle">AI Chef Assistant</h3>
+                <p id="aiWelcomeMsg">Ask me anything about the recipe</p>
+            </div>
+        </div>
+        <div class="ai-input-area">
+            <input type="text" class="ai-input" id="aiInput" placeholder="Ask the chef assistant..." onkeypress="aiHandleKeypress(event)" aria-label="Write a message to the AI assistant">
+            <button class="ai-send-btn" id="aiSendBtn" onclick="inviaMessaggioAi(document.getElementById('aiInput').value)" aria-label="Send message">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <button class="fab-ai" onclick="toggleAiChat()" title="AI Chef Assistant" aria-label="Open AI Chef Assistant">
+        <i class="fas fa-robot"></i>
+    </button>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="utils.js"></script>
+    <script src="shopping-list.js"></script>
+    <script src="pdf-export.js"></script>
+    <script src="view.js"></script>
+    <script src="ai-chat.js"></script>
+
+</body>
+</html>

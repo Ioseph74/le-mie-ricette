@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Editor</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
+    <link rel="stylesheet" href="style.css?v=7">
+    <link rel="stylesheet" href="editor.css?v=7">
+    <link rel="stylesheet" href="auth.css?v=7">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="i18n.js"></script>
+</head>
+<body>
+
+    <noscript>
+        <div style="text-align:center;padding:60px 24px;font-family:sans-serif;">
+            <h2>JavaScript Required</h2>
+            <p>This application requires JavaScript to function. Please enable it in your browser settings.</p>
+        </div>
+    </noscript>
+
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="back-link">
+                <i class="fas fa-arrow-left"></i> <span id="backTitle">My Recipes</span>
+            </a>
+            <h1 class="editor-title" id="editorTitle">New Recipe</h1>
+            <div class="header-actions">
+                <button class="btn-secondary" onclick="annulla()">
+                    <i class="fas fa-times"></i> <span class="hide-mobile" id="btnCancelText">Cancel</span>
+                </button>
+                <button class="btn-primary" onclick="salva()">
+                    <i class="fas fa-save"></i> <span class="hide-mobile" id="btnSaveText">Save</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="editor-main">
+
+        <!-- LEFT COLUMN -->
+        <div class="editor-col">
+
+            <!-- IMPORT FROM URL -->
+            <section class="editor-section import-section" id="importSection">
+                <h3 class="section-title"><i class="fas fa-globe"></i> <span id="importTitle">Import from Web</span></h3>
+                <div class="import-row">
+                    <input type="text" id="importUrl" class="import-input" placeholder="Paste recipe URL...">
+                    <button class="btn-primary btn-import" onclick="importFromUrl()" id="btnImport">
+                        <i class="fas fa-download"></i> <span>Import</span>
+                    </button>
+                </div>
+                <div id="importStatus" class="import-status" style="display:none;"></div>
+            </section>
+
+            <!-- PHOTO -->
+            <section class="editor-section">
+                <div class="foto-upload" id="fotoUpload">
+                    <img id="fotoPreview" src="" alt="Recipe photo preview" style="display:none;">
+                    <div class="foto-placeholder" id="fotoPlaceholder">
+                        <i class="fas fa-camera"></i>
+                        <span id="addPhotoText">Add photo</span>
+                    </div>
+                    <input type="file" id="fotoInput" accept="image/*" style="display:none;">
+                    <button class="foto-remove" id="fotoRemove" style="display:none;"
+                        onclick="event.stopPropagation(); rimuoviFoto()" aria-label="Remove photo">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- TITLE -->
+            <section class="editor-section">
+                <input type="text" id="titolo" class="input-titolo" placeholder="Recipe name...">
+            </section>
+
+            <!-- INFO -->
+            <section class="editor-section">
+                <h3 class="section-title"><i class="fas fa-info-circle"></i> <span id="infoTitle">Information</span></h3>
+                <div class="info-grid">
+                    <div class="info-field">
+                        <label id="lblCategory">Category</label>
+                        <select id="categoria">
+                            <option value="">-- Select --</option>
+                            <option value="antipasti">🥗 Appetizers</option>
+                            <option value="primi">🍝 First Courses</option>
+                            <option value="secondi">🥩 Main Courses</option>
+                            <option value="contorni">🥦 Side Dishes</option>
+                            <option value="dolci">🍰 Desserts</option>
+                            <option value="pane-e-lievitati">🍞 Bread & Baked</option>
+                            <option value="salse-e-condimenti">🫙 Sauces</option>
+                            <option value="bevande">🥤 Beverages</option>
+                            <option value="conserve">🏺 Preserves</option>
+                            <option value="base">📋 Basics</option>
+                        </select>
+                    </div>
+                    <div class="info-field">
+                        <label id="lblDifficulty">Difficulty</label>
+                        <div class="difficulty-selector" id="difficoltaSelector">
+                            <button class="diff-btn active" data-value="1" id="diffEasy">Easy</button>
+                            <button class="diff-btn" data-value="2" id="diffMedium">Medium</button>
+                            <button class="diff-btn" data-value="3" id="diffHard">Hard</button>
+                        </div>
+                    </div>
+                    <div class="info-field">
+                        <label><i class="fas fa-clock"></i> <span id="lblPrepTime">Preparation (min)</span></label>
+                        <input type="number" id="tempoPreparazione" min="0" placeholder="0">
+                    </div>
+                    <div class="info-field">
+                        <label><i class="fas fa-fire"></i> <span id="lblCookTime">Cooking (min)</span></label>
+                        <input type="number" id="tempoCottura" min="0" placeholder="0">
+                    </div>
+                </div>
+            </section>
+
+            <!-- DOSES -->
+            <section class="editor-section">
+                <h3 class="section-title"><i class="fas fa-balance-scale"></i> <span id="dosesTitle">Doses & Servings</span></h3>
+                <div class="info-grid">
+                    <div class="info-field">
+                        <label id="lblServings">Servings</label>
+                        <input type="number" id="porzioniOriginali" min="1" placeholder="4">
+                    </div>
+                    <div class="info-field">
+                        <label id="lblServingWeight">Serving weight (g)</label>
+                        <input type="number" id="pesoPorzione" min="0" placeholder="e.g. 150">
+                    </div>
+                </div>
+            </section>
+
+            <!-- RATING -->
+            <section class="editor-section">
+                <h3 class="section-title"><i class="fas fa-star"></i> <span id="ratingTitle">Rating</span></h3>
+                <div class="star-rating" id="starRating">
+                    <i class="fas fa-star" data-value="1"></i>
+                    <i class="fas fa-star" data-value="2"></i>
+                    <i class="fas fa-star" data-value="3"></i>
+                    <i class="fas fa-star" data-value="4"></i>
+                    <i class="fas fa-star" data-value="5"></i>
+                </div>
+            </section>
+
+            <!-- INGREDIENTS -->
+            <section class="editor-section">
+                <div class="section-header">
+                    <h3 class="section-title"><i class="fas fa-list"></i> <span id="ingredientsTitle">Ingredients</span></h3>
+                </div>
+                <div id="ingredientiContainer"></div>
+                <button class="btn-add-ingrediente" onclick="aggiungiIngrediente()" id="btnAddIngredient">
+                    <i class="fas fa-plus"></i> <span>Add ingredient</span>
+                </button>
+            </section>
+
+        </div>
+
+        <!-- RIGHT COLUMN: Preparations -->
+        <div class="editor-col">
+
+            <section class="editor-section">
+                <div class="section-header">
+                    <h3 class="section-title"><i class="fas fa-list-ol"></i> <span id="preparationsTitle">Preparations</span></h3>
+                    <button class="btn-add-small" onclick="aggiungiSezione()" id="btnAddSection">
+                        <i class="fas fa-plus"></i> <span>New Section</span>
+                    </button>
+                </div>
+                <div id="preparazioniContainer"></div>
+            </section>
+
+            <!-- NOTES -->
+            <section class="editor-section">
+                <h3 class="section-title"><i class="fas fa-sticky-note"></i> <span id="notesTitle">Notes</span></h3>
+                <textarea id="note" class="input-note" rows="4" placeholder="Tips, variants, notes..."></textarea>
+            </section>
+
+        </div>
+
+    </main>
+
+    <div class="mobile-save-bar">
+        <button class="btn-secondary" onclick="annulla()">
+            <i class="fas fa-times"></i> <span id="mobileCancelText">Cancel</span>
+        </button>
+        <button class="btn-primary" onclick="salva()">
+            <i class="fas fa-save"></i> <span id="mobileSaveText">Save Recipe</span>
+        </button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="utils.js"></script>
+    <script src="editor.js"></script>
+
+</body>
+</html>
