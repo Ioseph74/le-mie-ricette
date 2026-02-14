@@ -250,10 +250,7 @@ function renderCalcolo() {
 
     document.getElementById("porzioniDesiderate").value = parseInt(document.getElementById("porzioniDesiderate").value) || porzioniOriginali;
     if (pesoOriginalePorzione > 0) {
-        var currentDesired = parseInt(document.getElementById("pesoDesiderato").value);
-        if (!currentDesired || currentDesired === pesoOriginalePorzione || (currentUnitSystem === "imperial" && currentDesired === Math.round(displayPeso))) {
-            document.getElementById("pesoDesiderato").value = Math.round(displayPeso);
-        }
+        document.getElementById("pesoDesiderato").value = Math.round(displayPeso);
     }
     aggiornaCalcolo();
 }
