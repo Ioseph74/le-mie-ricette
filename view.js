@@ -710,7 +710,37 @@ async function translateRecipe() {
             risposta = data.choices[0].message.content;
         }
         risposta = risposta.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
-        var translated = JSON.parse(risposta);
+        console.log("AI response length:", risposta.length);
+        
+        // Try to parse, with repair for truncated JSON
+        var translated;
+        try {
+            translated = JSON.parse(risposta);
+        } catch (parseErr) {
+            console.warn("JSON parse failed, attempting repair:", parseErr.message);
+            // Try to repair truncated JSON by closing open brackets
+            var repaired = risposta;
+            // Count open/close brackets
+            var openBraces = (repaired.match(/{/g) || []).length;
+            var closeBraces = (repaired.match(/}/g) || []).length;
+            var openBrackets = (repaired.match(/\[/g) || []).length;
+            var closeBrackets = (repaired.match(/\]/g) || []).length;
+            // Remove trailing incomplete string (after last complete element)
+            repaired = repaired.replace(/,\s*"[^"]*$/, ""); // trailing incomplete key
+            repaired = repaired.replace(/,\s*"[^"]*":\s*"[^"]*$/, ""); // trailing incomplete value
+            repaired = repaired.replace(/,\s*"[^"]*":\s*\[[^\]]*$/, ""); // trailing incomplete array
+            repaired = repaired.replace(/,\s*"[^"]*$/, ""); // another pattern
+            repaired = repaired.replace(/,\s*$/, ""); // trailing comma
+            // Close brackets
+            for (var b = 0; b < openBrackets - closeBrackets; b++) repaired += "]";
+            for (var b2 = 0; b2 < openBraces - closeBraces; b2++) repaired += "}";
+            try {
+                translated = JSON.parse(repaired);
+                console.log("JSON repair successful");
+            } catch (e2) {
+                throw parseErr; // throw original error
+            }
+        }
 
         // Apply translations
         if (translated.titolo) {
