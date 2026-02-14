@@ -175,7 +175,12 @@ var translations = {
     "nutrition.calculating": { en: "Calculating nutrition...", it: "Calcolo valori nutrizionali...", fr: "Calcul des valeurs nutritionnelles...", de: "Naehrwerte werden berechnet...", es: "Calculando valores nutricionales..." },
     "nutrition.estimate": { en: "AI Estimate", it: "Stima AI", fr: "Estimation IA", de: "KI-Schaetzung", es: "Estimacion IA" },
     "nutrition.calculate": { en: "Calculate Nutrition", it: "Calcola Valori Nutrizionali", fr: "Calculer Nutrition", de: "Naehrwerte berechnen", es: "Calcular Nutricion" },
-    "nutrition.perServing": { en: "per serving", it: "per porzione", fr: "par portion", de: "pro Portion", es: "por porcion" }
+    "nutrition.perServing": { en: "per serving", it: "per porzione", fr: "par portion", de: "pro Portion", es: "por porcion" },
+    "translate.button": { en: "Translate Recipe", it: "Traduci Ricetta", fr: "Traduire Recette", de: "Rezept übersetzen", es: "Traducir Receta" },
+    "translate.translating": { en: "Translating...", it: "Traduzione in corso...", fr: "Traduction en cours...", de: "Übersetzung läuft...", es: "Traduciendo..." },
+    "translate.success": { en: "Recipe translated!", it: "Ricetta tradotta!", fr: "Recette traduite!", de: "Rezept übersetzt!", es: "Receta traducida!" },
+    "translate.error": { en: "Translation error. Try again.", it: "Errore di traduzione. Riprova.", fr: "Erreur de traduction. Réessayez.", de: "Übersetzungsfehler. Erneut versuchen.", es: "Error de traducción. Inténtelo de nuevo." },
+    "translate.original": { en: "Show Original", it: "Mostra Originale", fr: "Afficher Original", de: "Original anzeigen", es: "Mostrar Original" }
 };
 
 // ========================================

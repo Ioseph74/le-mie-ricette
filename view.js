@@ -614,3 +614,186 @@ function nutritionCard(cls, label, value, unit) {
         '<div class="nutrition-label">' + label + '</div>' +
         '</div>';
 }
+
+// ========================================
+// TRANSLATE RECIPE (AI-powered)
+// ========================================
+
+var isTranslated = false;
+var originalRecipeData = null;
+
+async function translateRecipe() {
+    if (!ricettaCorrente) return;
+
+    // If already translated, show original
+    if (isTranslated) {
+        showOriginalRecipe();
+        return;
+    }
+
+    var langNames = { en: "English", it: "Italian", fr: "French", de: "German", es: "Spanish" };
+    var targetLang = langNames[currentLanguage] || "English";
+
+    // Save original data
+    originalRecipeData = {
+        titolo: ricettaCorrente.titolo,
+        ingredienti: JSON.parse(JSON.stringify(ingredientiCorretti || ingredientiOriginali)),
+        preparazioni: JSON.parse(JSON.stringify(preparazioniCorrette || preparazioniOriginali)),
+        note: ricettaCorrente.note
+    };
+
+    mostraToast(t("translate.translating"), "info");
+
+    // Build the recipe text for translation
+    var recipeText = "Title: " + ricettaCorrente.titolo + "\n\n";
+    recipeText += "Ingredients:\n";
+    var ings = ingredientiCorretti || ingredientiOriginali;
+    for (var i = 0; i < ings.length; i++) {
+        recipeText += "- " + ings[i].nome + "\n";
+    }
+    recipeText += "\nPreparation sections:\n";
+    var preps = preparazioniCorrette || preparazioniOriginali;
+    for (var s = 0; s < preps.length; s++) {
+        recipeText += "Section: " + preps[s].titolo + "\n";
+        if (preps[s].ingredientiUsati) {
+            for (var j = 0; j < preps[s].ingredientiUsati.length; j++) {
+                recipeText += "  Ingredient: " + preps[s].ingredientiUsati[j].nome + "\n";
+            }
+        }
+        if (preps[s].passi) {
+            for (var p = 0; p < preps[s].passi.length; p++) {
+                var testoP = typeof preps[s].passi[p] === "string" ? preps[s].passi[p] : preps[s].passi[p].testo;
+                recipeText += "  Step " + (p + 1) + ": " + testoP + "\n";
+            }
+        }
+    }
+    if (ricettaCorrente.note) {
+        recipeText += "\nNotes: " + ricettaCorrente.note + "\n";
+    }
+
+    var prompt = "Translate the following recipe to " + targetLang + ". " +
+        "Return ONLY a valid JSON object (no markdown, no explanation) with this exact structure: " +
+        '{"titolo":"translated title","ingredienti":["translated name 1","translated name 2"],' +
+        '"sezioni":[{"titolo":"translated section title","ingredientiUsati":["translated name"],"passi":["translated step text"]}],' +
+        '"note":"translated notes"}' +
+        "\n\nKeep quantities and units unchanged. Translate ONLY the text names and descriptions.\n\n" +
+        recipeText;
+
+    try {
+        var response = await fetch(AI_ENDPOINT, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + AI_API_KEY
+            },
+            body: JSON.stringify({
+                model: AI_MODEL,
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.2,
+                max_tokens: 4096
+            })
+        });
+        var data = await response.json();
+        if (!response.ok) throw new Error((data.error && data.error.message) || "API Error");
+        var risposta = "";
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+            risposta = data.choices[0].message.content;
+        }
+        risposta = risposta.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+        var translated = JSON.parse(risposta);
+
+        // Apply translations
+        if (translated.titolo) {
+            ricettaCorrente.titolo = translated.titolo;
+            document.getElementById("heroTitle").textContent = translated.titolo;
+            document.title = translated.titolo + " — " + t("app.title");
+        }
+
+        // Translate ingredient names
+        if (translated.ingredienti && translated.ingredienti.length > 0) {
+            var ingData = ingredientiCorretti || ingredientiOriginali;
+            for (var i = 0; i < Math.min(translated.ingredienti.length, ingData.length); i++) {
+                ingData[i].nome = translated.ingredienti[i];
+            }
+            renderIngredienti();
+        }
+
+        // Translate preparation sections
+        if (translated.sezioni && translated.sezioni.length > 0) {
+            var prepData = preparazioniCorrette || preparazioniOriginali;
+            for (var s = 0; s < Math.min(translated.sezioni.length, prepData.length); s++) {
+                var ts = translated.sezioni[s];
+                if (ts.titolo) prepData[s].titolo = ts.titolo;
+                if (ts.ingredientiUsati && prepData[s].ingredientiUsati) {
+                    for (var j = 0; j < Math.min(ts.ingredientiUsati.length, prepData[s].ingredientiUsati.length); j++) {
+                        prepData[s].ingredientiUsati[j].nome = ts.ingredientiUsati[j];
+                    }
+                }
+                if (ts.passi && prepData[s].passi) {
+                    for (var p = 0; p < Math.min(ts.passi.length, prepData[s].passi.length); p++) {
+                        if (typeof prepData[s].passi[p] === "string") {
+                            prepData[s].passi[p] = ts.passi[p];
+                        } else {
+                            prepData[s].passi[p].testo = ts.passi[p];
+                        }
+                    }
+                }
+            }
+            renderPreparazioni();
+        }
+
+        // Translate notes
+        if (translated.note && ricettaCorrente.note) {
+            ricettaCorrente.note = translated.note;
+            var noteText = document.getElementById("noteText");
+            if (noteText) noteText.textContent = translated.note;
+        }
+
+        isTranslated = true;
+        // Change translate button to "Show Original"
+        var btn = document.getElementById("btnTranslate");
+        if (btn) {
+            btn.innerHTML = '<i class="fas fa-undo"></i>';
+            btn.title = t("translate.original");
+        }
+        mostraToast(t("translate.success"), "success");
+
+    } catch (error) {
+        console.error("Translation error:", error);
+        mostraToast(t("translate.error"), "error");
+    }
+}
+
+function showOriginalRecipe() {
+    if (!originalRecipeData) return;
+
+    ricettaCorrente.titolo = originalRecipeData.titolo;
+    document.getElementById("heroTitle").textContent = originalRecipeData.titolo;
+    document.title = originalRecipeData.titolo + " — " + t("app.title");
+
+    if (ingredientiCorretti) {
+        ingredientiCorretti = JSON.parse(JSON.stringify(originalRecipeData.ingredienti));
+    }
+    ingredientiOriginali = JSON.parse(JSON.stringify(originalRecipeData.ingredienti));
+    renderIngredienti();
+
+    if (preparazioniCorrette) {
+        preparazioniCorrette = JSON.parse(JSON.stringify(originalRecipeData.preparazioni));
+    }
+    preparazioniOriginali = JSON.parse(JSON.stringify(originalRecipeData.preparazioni));
+    renderPreparazioni();
+
+    if (originalRecipeData.note) {
+        ricettaCorrente.note = originalRecipeData.note;
+        var noteText = document.getElementById("noteText");
+        if (noteText) noteText.textContent = originalRecipeData.note;
+    }
+
+    isTranslated = false;
+    var btn = document.getElementById("btnTranslate");
+    if (btn) {
+        btn.innerHTML = '<i class="fas fa-language"></i>';
+        btn.title = t("translate.button");
+    }
+    mostraToast(t("translate.original"), "success");
+}
