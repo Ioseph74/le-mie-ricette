@@ -117,30 +117,29 @@ function inviaMessaggioAi(testo) {
 
     var recipeName = ricettaCorrente ? ricettaCorrente.titolo : "a recipe";
 
-    var contents = [];
-    contents.push({
-        role: "user",
-        parts: [{ text: systemPrompt + "\n\nInitial question: Hello, I am ready to help with this recipe!" }]
-    });
-    contents.push({
-        role: "model",
-        parts: [{ text: t("ai.welcome") + " - **" + recipeName + "**!" }]
-    });
+    var messages = [];
+    messages.push({ role: "system", content: systemPrompt });
+    messages.push({ role: "assistant", content: t("ai.welcome") + " - **" + recipeName + "**!" });
 
     for (var i = 0; i < aiConversation.length; i++) {
         var msg = aiConversation[i];
-        contents.push({
-            role: msg.role === "user" ? "user" : "model",
-            parts: [{ text: msg.text }]
+        messages.push({
+            role: msg.role === "user" ? "user" : "assistant",
+            content: msg.text
         });
     }
 
     fetch(AI_ENDPOINT, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + AI_API_KEY
+        },
         body: JSON.stringify({
-            contents: contents,
-            generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
+            model: AI_MODEL,
+            messages: messages,
+            temperature: 0.7,
+            max_tokens: 1024
         })
     })
     .then(function(response) {
@@ -155,8 +154,8 @@ function inviaMessaggioAi(testo) {
         mostraAiLoading(false);
 
         var risposta = "";
-        if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-            risposta = data.candidates[0].content.parts[0].text;
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+            risposta = data.choices[0].message.content;
         } else if (data.error) {
             risposta = "⚠️ API Error: " + data.error.message;
         } else {
@@ -172,11 +171,11 @@ function inviaMessaggioAi(testo) {
         var msg = "Connection error. Check your internet connection and try again.";
         if (error && error.apiError) {
             if (error.status === 429) {
-                msg = "⚠️ API quota exceeded. The free tier limit has been reached. Please wait a few minutes or check your API key configuration in api-config.js.";
-            } else if (error.status === 403) {
+                msg = "⚠️ Rate limit reached. Please wait a moment and try again.";
+            } else if (error.status === 401 || error.status === 403) {
                 msg = "⚠️ API key error. Please check your API key in api-config.js.";
             } else if (error.data && error.data.error) {
-                msg = "⚠️ API Error (" + error.status + "): " + error.data.error.message;
+                msg = "⚠️ API Error (" + error.status + "): " + (error.data.error.message || JSON.stringify(error.data.error));
             }
         }
         aiConversation.push({ role: "ai", text: msg });

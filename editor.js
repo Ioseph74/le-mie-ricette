@@ -160,17 +160,25 @@ async function importFromUrl() {
 
         var response = await fetch(AI_ENDPOINT, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + AI_API_KEY
+            },
             body: JSON.stringify({
-                contents: [{ role: "user", parts: [{ text: prompt }] }],
-                generationConfig: { temperature: 0.3, maxOutputTokens: 4096 }
+                model: AI_MODEL,
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.3,
+                max_tokens: 4096
             })
         });
 
         var data = await response.json();
+        if (!response.ok) {
+            throw new Error((data.error && data.error.message) ? data.error.message : "API Error " + response.status);
+        }
         var risposta = "";
-        if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-            risposta = data.candidates[0].content.parts[0].text;
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+            risposta = data.choices[0].message.content;
         }
 
         // Clean up response - extract JSON

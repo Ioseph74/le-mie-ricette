@@ -534,13 +534,17 @@ async function calculateNutrition() {
         '{"calories":0,"fat":0,"carbs":0,"protein":0,"fiber":0,"sugar":0}' +
         " Values should be numbers (grams except calories which are kcal).";
     try {
-        var AI_EP = AI_ENDPOINT;
-        var response = await fetch(AI_EP, {
+        var response = await fetch(AI_ENDPOINT, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + AI_API_KEY
+            },
             body: JSON.stringify({
-                contents: [{ role: "user", parts: [{ text: prompt }] }],
-                generationConfig: { temperature: 0.2, maxOutputTokens: 512 }
+                model: AI_MODEL,
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.2,
+                max_tokens: 512
             })
         });
         var data = await response.json();
@@ -552,8 +556,8 @@ async function calculateNutrition() {
             throw new Error(apiMsg);
         }
         var risposta = "";
-        if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-            risposta = data.candidates[0].content.parts[0].text;
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+            risposta = data.choices[0].message.content;
         }
         if (!risposta) throw new Error("Empty AI response");
         risposta = risposta.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
