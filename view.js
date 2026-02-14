@@ -534,7 +534,7 @@ async function calculateNutrition() {
         '{"calories":0,"fat":0,"carbs":0,"protein":0,"fiber":0,"sugar":0}' +
         " Values should be numbers (grams except calories which are kcal).";
     try {
-        var AI_EP = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDAdcO68x4L73T7qgBlmPlitOBh7J58SQM";
+        var AI_EP = AI_ENDPOINT;
         var response = await fetch(AI_EP, {
             method: "POST",
             headers: { "Content-Type": "application/json" },

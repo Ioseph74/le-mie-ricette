@@ -2,9 +2,8 @@
 // AI-CHAT.JS - AI Chef Assistant with Gemini
 // ========================================
 
-var AI_CHAT_API_KEY = "AIzaSyDAdcO68x4L73T7qgBlmPlitOBh7J58SQM";
-var AI_CHAT_MODEL = "gemini-2.0-flash";
-var AI_CHAT_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/" + AI_CHAT_MODEL + ":generateContent?key=" + AI_CHAT_API_KEY;
+// Uses AI_API_KEY, AI_MODEL, AI_ENDPOINT from api-config.js
+var AI_CHAT_ENDPOINT = AI_ENDPOINT;
 
 var aiConversation = [];
 var aiIsLoading = false;
