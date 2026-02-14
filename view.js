@@ -623,7 +623,6 @@ var isTranslated = false;
 var originalRecipeData = null;
 
 async function translateRecipe() {
-    console.log("translateRecipe called, ricettaCorrente:", !!ricettaCorrente);
     if (!ricettaCorrente) {
         mostraToast("No recipe loaded", "error");
         return;
@@ -637,7 +636,6 @@ async function translateRecipe() {
 
     var langNames = { en: "English", it: "Italian", fr: "French", de: "German", es: "Spanish" };
     var targetLang = langNames[currentLanguage] || "English";
-    console.log("Translating to:", targetLang);
 
     // Save original data
     originalRecipeData = {
@@ -649,32 +647,8 @@ async function translateRecipe() {
 
     mostraToast(t("translate.translating"), "success");
 
-    // Build the recipe text for translation
-    var recipeText = "Title: " + ricettaCorrente.titolo + "\n\n";
-    recipeText += "Ingredients:\n";
     var ings = ingredientiCorretti || ingredientiOriginali;
-    for (var i = 0; i < ings.length; i++) {
-        recipeText += "- " + ings[i].nome + "\n";
-    }
-    recipeText += "\nPreparation sections:\n";
     var preps = preparazioniCorrette || preparazioniOriginali;
-    for (var s = 0; s < preps.length; s++) {
-        recipeText += "Section: " + preps[s].titolo + "\n";
-        if (preps[s].ingredientiUsati) {
-            for (var j = 0; j < preps[s].ingredientiUsati.length; j++) {
-                recipeText += "  Ingredient: " + preps[s].ingredientiUsati[j].nome + "\n";
-            }
-        }
-        if (preps[s].passi) {
-            for (var p = 0; p < preps[s].passi.length; p++) {
-                var testoP = typeof preps[s].passi[p] === "string" ? preps[s].passi[p] : preps[s].passi[p].testo;
-                recipeText += "  Step " + (p + 1) + ": " + testoP + "\n";
-            }
-        }
-    }
-    if (ricettaCorrente.note) {
-        recipeText += "\nNotes: " + ricettaCorrente.note + "\n";
-    }
 
     // Build a simple numbered list for translation
     var items = [];
@@ -726,8 +700,6 @@ async function translateRecipe() {
         if (data.choices && data.choices[0] && data.choices[0].message) {
             risposta = data.choices[0].message.content;
         }
-        console.log("AI translate response:", risposta);
-
         // Parse the line-based response
         var lines = risposta.split("\n");
         var translated = {};
@@ -740,7 +712,6 @@ async function translateRecipe() {
             var val = line.substring(colonIdx + 2).trim();
             translated[key] = val;
         }
-        console.log("Parsed translations:", Object.keys(translated).length, "items");
 
         // Apply translations using KEY:VALUE format
         if (translated["TITLE"]) {
@@ -803,8 +774,6 @@ async function translateRecipe() {
 
     } catch (error) {
         console.error("Translation error:", error);
-        console.error("Error message:", error.message);
-        console.error("Error stack:", error.stack);
         var errMsg = t("translate.error");
         if (error && error.message) {
             errMsg += " (" + error.message + ")";
