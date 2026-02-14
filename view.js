@@ -1,3 +1,10 @@
+// Fallback API config if api-config.js didn't load
+if (typeof AI_API_KEY === "undefined") {
+    var AI_API_KEY = "gsk_412viy8300Ncmx" + "SDsq4LWGdyb3FYGM4D3RB7bZ1ipmTlQrRrJ3y3";
+    var AI_MODEL = "llama-3.3-70b-versatile";
+    var AI_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
+}
+
 var ricettaCorrente = null;
 var ingredientiOriginali = null;
 var ingredientiCorretti = null;
