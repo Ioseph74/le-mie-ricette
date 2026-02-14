@@ -24,6 +24,12 @@ if (typeof AI_API_KEY === "undefined") {
     var AI_MODEL = "llama-3.3-70b-versatile";
     var AI_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
 }
+// Use CORS proxy when running from a web server (not file://)
+if (typeof AI_ENDPOINT !== "undefined" && window.location.protocol !== "file:") {
+    if (AI_ENDPOINT.indexOf("groq.com") !== -1 && AI_ENDPOINT.indexOf("corsproxy") === -1) {
+        AI_ENDPOINT = "https://corsproxy.io/?" + encodeURIComponent(AI_ENDPOINT);
+    }
+}
 
 // ========================================
 // INIT
