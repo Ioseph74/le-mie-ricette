@@ -1,15 +1,16 @@
 var tutteLeRicette = [];
 var categoriaAttiva = "tutte";
 var ricercaAttiva = "";
+var userFilterAttivo = "all"; // "all", "mine", "favorites", "following"
 
 document.addEventListener("DOMContentLoaded", function() {
     applyTranslationsIndex();
     initAuth(function(user) {
+        renderUserFilter();
         caricaEMostraRicette();
     });
     inizializzaFiltri();
     inizializzaRicerca();
-    // Insert language selector
     var langContainer = document.getElementById("langSelectorContainer");
     if (langContainer) langContainer.innerHTML = buildLanguageSelector();
 });
@@ -71,6 +72,15 @@ function mostraRicette() {
         ricetteFiltrate = ricetteFiltrate.filter(function(r) { return r.categoria === categoriaAttiva; });
     }
 
+    // Apply user filter
+    if (userFilterAttivo === "mine" && auth.currentUser) {
+        ricetteFiltrate = ricetteFiltrate.filter(function(r) { return r.autore === auth.currentUser.uid; });
+    } else if (userFilterAttivo === "favorites" && auth.currentUser) {
+        ricetteFiltrate = ricetteFiltrate.filter(function(r) { return favoriteIds.has(r.id); });
+    } else if (userFilterAttivo === "following" && auth.currentUser) {
+        ricetteFiltrate = ricetteFiltrate.filter(function(r) { return followingIds.has(r.autore); });
+    }
+
     if (ricercaAttiva.trim() !== "") {
         var query = ricercaAttiva.toLowerCase();
         ricetteFiltrate = ricetteFiltrate.filter(function(r) {
@@ -102,7 +112,7 @@ function creaCard(ricetta) {
     var difficolta = generaDifficolta(ricetta.difficolta || 1);
     var tempoTotale = (ricetta.tempoPreparazione || 0) + (ricetta.tempoCottura || 0);
     var categoriaNome = formattaCategoria(ricetta.categoria);
-    var loggato = isLoggato();
+    var isOwner = auth.currentUser && ricetta.autore === auth.currentUser.uid;
 
     var titoloEscaped = escapeHtml(ricetta.titolo || t("card.noTitle"));
 
@@ -111,11 +121,16 @@ function creaCard(ricetta) {
         : '<div class="placeholder-icon"><i class="fas fa-utensils"></i></div>';
 
     var actionsHtml = "";
-    if (loggato) {
+    if (isOwner) {
         actionsHtml = '<div class="recipe-card-actions">' +
             '<button onclick="event.stopPropagation(); modificaRicetta(\'' + ricetta.id + '\')" title="' + t("view.edit") + '" aria-label="' + t("view.edit") + '"><i class="fas fa-pen"></i></button>' +
             '<button onclick="event.stopPropagation(); confermaElimina(\'' + ricetta.id + '\')" title="' + t("app.delete") + '" aria-label="' + t("app.delete") + '"><i class="fas fa-trash"></i></button>' +
             '</div>';
+    }
+
+    var authorHtml = "";
+    if (ricetta.autoreNome && !isOwner) {
+        authorHtml = '<div class="recipe-card-author"><i class="fas fa-user"></i> ' + escapeHtml(ricetta.autoreNome) + '</div>';
     }
 
     return '<div class="recipe-card" onclick="apriRicetta(\'' + ricetta.id + '\')">' +
@@ -123,6 +138,7 @@ function creaCard(ricetta) {
         '<div class="recipe-card-img">' + imgHtml + '</div>' +
         '<div class="recipe-card-body">' +
         '<div class="recipe-card-category">' + escapeHtml(categoriaNome) + '</div>' +
+        authorHtml +
         '<div class="recipe-card-title">' + titoloEscaped + '</div>' +
         '<div class="recipe-card-meta">' +
         (tempoTotale > 0 ? '<span><i class="far fa-clock"></i> ' + tempoTotale + ' min</span>' : '') +
@@ -154,6 +170,63 @@ function inizializzaRicerca() {
             mostraRicette();
         }, 300);
     });
+}
+
+// ========================================
+// USER FILTER
+// ========================================
+
+var favoriteIds = new Set();
+var followingIds = new Set();
+
+function renderUserFilter() {
+    var container = document.getElementById("userFilterContainer");
+    if (!container) return;
+    if (!auth.currentUser) {
+        container.innerHTML = "";
+        return;
+    }
+    container.innerHTML =
+        '<div class="user-filter">' +
+        '<button class="user-filter-btn' + (userFilterAttivo === "all" ? ' active' : '') + '" onclick="setUserFilter(\'all\')">' + t("filter.all") + '</button>' +
+        '<button class="user-filter-btn' + (userFilterAttivo === "mine" ? ' active' : '') + '" onclick="setUserFilter(\'mine\')"><i class="fas fa-user"></i> ' + t("filter.mine") + '</button>' +
+        '<button class="user-filter-btn' + (userFilterAttivo === "favorites" ? ' active' : '') + '" onclick="setUserFilter(\'favorites\')"><i class="fas fa-heart"></i> ' + t("filter.favorites") + '</button>' +
+        '<button class="user-filter-btn' + (userFilterAttivo === "following" ? ' active' : '') + '" onclick="setUserFilter(\'following\')"><i class="fas fa-users"></i> ' + t("filter.following") + '</button>' +
+        '<a href="settings.html" class="user-filter-btn" title="' + t("settings.title") + '"><i class="fas fa-cog"></i></a>' +
+        '</div>';
+}
+
+async function setUserFilter(filter) {
+    userFilterAttivo = filter;
+    renderUserFilter();
+    if (filter === "favorites") {
+        await loadFavoriteIds();
+    } else if (filter === "following") {
+        await loadFollowingIds();
+    }
+    mostraRicette();
+}
+
+async function loadFavoriteIds() {
+    favoriteIds = new Set();
+    if (!auth.currentUser) return;
+    try {
+        var snapshot = await db.collection("preferiti").where("userId", "==", auth.currentUser.uid).get();
+        snapshot.forEach(function(doc) {
+            favoriteIds.add(doc.data().ricettaId);
+        });
+    } catch (e) { console.error("Load favorites error:", e); }
+}
+
+async function loadFollowingIds() {
+    followingIds = new Set();
+    if (!auth.currentUser) return;
+    try {
+        var snapshot = await db.collection("seguiti").where("userId", "==", auth.currentUser.uid).get();
+        snapshot.forEach(function(doc) {
+            followingIds.add(doc.data().followedId);
+        });
+    } catch (e) { console.error("Load following error:", e); }
 }
 
 function apriRicetta(id) { window.location.href = "view.html?id=" + id; }

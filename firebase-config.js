@@ -102,6 +102,8 @@ async function salvaRicetta(ricetta) {
     ricetta.dataCreazione = new Date().toISOString();
     ricetta.ultimaModifica = new Date().toISOString();
     ricetta.autore = auth.currentUser.uid;
+    ricetta.autoreNome = auth.currentUser.displayName || "User";
+    ricetta.autoreFoto = auth.currentUser.photoURL || "";
     var docRef = await ricetteRef.add(ricetta);
     return docRef.id;
 }
@@ -111,6 +113,8 @@ async function aggiornaRicetta(id, ricetta) {
         throw new Error("Authentication required");
     }
     ricetta.ultimaModifica = new Date().toISOString();
+    ricetta.autoreNome = auth.currentUser.displayName || "User";
+    ricetta.autoreFoto = auth.currentUser.photoURL || "";
     await ricetteRef.doc(id).update(ricetta);
 }
 

@@ -129,6 +129,7 @@ async function caricaVista(id) {
         renderPreparazioni();
         renderNote();
         loadComments(id);
+        updateOwnerButtons();
         document.title = ricettaCorrente.titolo + " — " + t("app.title");
     } catch (error) {
         console.error("Loading error:", error);
@@ -424,6 +425,145 @@ function condividi() {
     } else {
         navigator.clipboard.writeText(url).then(function() { mostraToast(t("toast.linkCopied"), "success"); });
     }
+}
+
+// ========================================
+// OWNER BUTTONS & ACTIONS
+// ========================================
+
+function updateOwnerButtons() {
+    if (!ricettaCorrente) return;
+    var isOwner = auth.currentUser && ricettaCorrente.autore === auth.currentUser.uid;
+    // Show/hide owner-only buttons (edit, delete)
+    document.querySelectorAll(".owner-only").forEach(function(el) {
+        el.style.display = isOwner ? "" : "none";
+    });
+    // Show/hide non-owner buttons (copy, favorite)
+    document.querySelectorAll(".non-owner-action").forEach(function(el) {
+        el.style.display = (auth.currentUser && !isOwner) ? "" : "none";
+    });
+    // Show author info
+    var authorEl = document.getElementById("recipeAuthor");
+    if (authorEl && ricettaCorrente.autoreNome) {
+        authorEl.innerHTML = '<i class="fas fa-user"></i> ' + escapeHtml(ricettaCorrente.autoreNome);
+        authorEl.style.display = "inline-flex";
+    }
+    // Update favorite button state
+    updateFavoriteButton();
+    // Update follow button state
+    updateFollowButton();
+}
+
+async function toggleFavorite() {
+    if (!auth.currentUser || !ricettaCorrente) return;
+    var uid = auth.currentUser.uid;
+    var rid = ricettaCorrente.id;
+    try {
+        var docRef = db.collection("preferiti").doc(uid + "_" + rid);
+        var doc = await docRef.get();
+        if (doc.exists) {
+            await docRef.delete();
+            mostraToast(t("fav.removed"), "success");
+        } else {
+            await docRef.set({
+                userId: uid,
+                ricettaId: rid,
+                titolo: ricettaCorrente.titolo,
+                foto: ricettaCorrente.foto || null,
+                data: new Date().toISOString()
+            });
+            mostraToast(t("fav.added"), "success");
+        }
+        updateFavoriteButton();
+    } catch (error) {
+        console.error("Favorite error:", error);
+    }
+}
+
+async function updateFavoriteButton() {
+    var btn = document.getElementById("btnFavorite");
+    if (!btn || !auth.currentUser || !ricettaCorrente) return;
+    btn.style.display = auth.currentUser ? "" : "none";
+    try {
+        var docRef = db.collection("preferiti").doc(auth.currentUser.uid + "_" + ricettaCorrente.id);
+        var doc = await docRef.get();
+        if (doc.exists) {
+            btn.innerHTML = '<i class="fas fa-heart" style="color:#e53e3e;"></i>';
+            btn.title = t("fav.remove");
+        } else {
+            btn.innerHTML = '<i class="far fa-heart"></i>';
+            btn.title = t("fav.add");
+        }
+    } catch (e) {
+        // ignore
+    }
+}
+
+async function copyRecipeToMyProfile() {
+    if (!auth.currentUser || !ricettaCorrente) return;
+    try {
+        var copy = JSON.parse(JSON.stringify(ricettaCorrente));
+        delete copy.id;
+        copy.titolo = copy.titolo + " (" + t("copy.suffix") + ")";
+        copy.autore = auth.currentUser.uid;
+        copy.autoreNome = auth.currentUser.displayName || "User";
+        copy.autoreFoto = auth.currentUser.photoURL || "";
+        copy.dataCreazione = new Date().toISOString();
+        copy.ultimaModifica = new Date().toISOString();
+        copy.copiaDa = ricettaCorrente.id;
+        var docRef = await ricetteRef.add(copy);
+        mostraToast(t("copy.success"), "success");
+        setTimeout(function() { window.location.href = "editor.html?id=" + docRef.id; }, 800);
+    } catch (error) {
+        console.error("Copy error:", error);
+        mostraToast(t("copy.error"), "error");
+    }
+}
+
+async function toggleFollowAuthor() {
+    if (!auth.currentUser || !ricettaCorrente || !ricettaCorrente.autore) return;
+    if (ricettaCorrente.autore === auth.currentUser.uid) return;
+    var uid = auth.currentUser.uid;
+    var authorId = ricettaCorrente.autore;
+    try {
+        var docRef = db.collection("seguiti").doc(uid + "_" + authorId);
+        var doc = await docRef.get();
+        if (doc.exists) {
+            await docRef.delete();
+            mostraToast(t("follow.unfollowed"), "success");
+        } else {
+            await docRef.set({
+                userId: uid,
+                followedId: authorId,
+                followedNome: ricettaCorrente.autoreNome || "",
+                followedFoto: ricettaCorrente.autoreFoto || "",
+                data: new Date().toISOString()
+            });
+            mostraToast(t("follow.followed"), "success");
+        }
+        updateFollowButton();
+    } catch (error) {
+        console.error("Follow error:", error);
+    }
+}
+
+async function updateFollowButton() {
+    var btn = document.getElementById("btnFollow");
+    if (!btn || !auth.currentUser || !ricettaCorrente) return;
+    var isOwner = ricettaCorrente.autore === auth.currentUser.uid;
+    btn.style.display = (!isOwner && auth.currentUser) ? "inline-flex" : "none";
+    if (isOwner) return;
+    try {
+        var docRef = db.collection("seguiti").doc(auth.currentUser.uid + "_" + ricettaCorrente.autore);
+        var doc = await docRef.get();
+        if (doc.exists) {
+            btn.innerHTML = '<i class="fas fa-user-check"></i> ' + t("follow.following");
+            btn.classList.add("following");
+        } else {
+            btn.innerHTML = '<i class="fas fa-user-plus"></i> ' + t("follow.follow");
+            btn.classList.remove("following");
+        }
+    } catch (e) {}
 }
 
 function modificaRicetta() { window.location.href = "editor.html?id=" + ricettaCorrente.id; }
