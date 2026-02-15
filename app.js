@@ -2,6 +2,15 @@ var tutteLeRicette = [];
 var categoriaAttiva = "tutte";
 var ricercaAttiva = "";
 var userFilterAttivo = "all"; // "all", "mine", "favorites", "following"
+var activeTagFilters = [];
+var advancedSearchOpen = false;
+
+// Tag definitions (must match editor.js)
+var TAG_GROUPS = {
+    diet: ["vegetarian", "vegan", "keto", "low-carb", "paleo", "mediterranean", "low-fat", "high-protein", "whole30"],
+    allergen: ["gluten-free", "lactose-free", "dairy-free", "nut-free", "egg-free", "soy-free", "sugar-free", "shellfish-free"],
+    style: ["quick", "no-cook", "kid-friendly", "light", "comfort-food", "meal-prep", "one-pot", "budget", "gourmet"]
+};
 
 document.addEventListener("DOMContentLoaded", function() {
     applyTranslationsIndex();
@@ -72,6 +81,14 @@ function mostraRicette() {
         ricetteFiltrate = ricetteFiltrate.filter(function(r) { return r.categoria === categoriaAttiva; });
     }
 
+    // Filter private recipes: show only own private recipes, hide others'
+    ricetteFiltrate = ricetteFiltrate.filter(function(r) {
+        if (r.pubblica === false) {
+            return auth.currentUser && r.autore === auth.currentUser.uid;
+        }
+        return true;
+    });
+
     // Apply user filter
     if (userFilterAttivo === "mine" && auth.currentUser) {
         ricetteFiltrate = ricetteFiltrate.filter(function(r) { return r.autore === auth.currentUser.uid; });
@@ -79,6 +96,17 @@ function mostraRicette() {
         ricetteFiltrate = ricetteFiltrate.filter(function(r) { return favoriteIds.has(r.id); });
     } else if (userFilterAttivo === "following" && auth.currentUser) {
         ricetteFiltrate = ricetteFiltrate.filter(function(r) { return followingIds.has(r.autore); });
+    }
+
+    // Apply tag filters
+    if (activeTagFilters.length > 0) {
+        ricetteFiltrate = ricetteFiltrate.filter(function(r) {
+            if (!r.tags || r.tags.length === 0) return false;
+            for (var i = 0; i < activeTagFilters.length; i++) {
+                if (r.tags.indexOf(activeTagFilters[i]) === -1) return false;
+            }
+            return true;
+        });
     }
 
     if (ricercaAttiva.trim() !== "") {
@@ -146,7 +174,78 @@ function creaCard(ricetta) {
         '<span><i class="fas fa-users"></i> ' + (ricetta.porzioniOriginali || "-") + '</span>' +
         '</div>' +
         '<div class="recipe-card-stars">' + stelle + '</div>' +
+        renderCardTags(ricetta.tags) +
         '</div></div>';
+}
+
+function renderCardTags(tags) {
+    if (!tags || tags.length === 0) return "";
+    var html = '<div class="recipe-card-tags">';
+    var max = Math.min(tags.length, 4);
+    for (var i = 0; i < max; i++) {
+        var label = t("tag.diet." + tags[i]) || t("tag.allergen." + tags[i]) || t("tag.style." + tags[i]) || tags[i];
+        html += '<span class="tag-mini">' + escapeHtml(label) + '</span>';
+    }
+    if (tags.length > 4) html += '<span class="tag-mini">+' + (tags.length - 4) + '</span>';
+    html += '</div>';
+    return html;
+}
+
+// ========================================
+// ADVANCED SEARCH
+// ========================================
+
+function toggleAdvancedSearch() {
+    advancedSearchOpen = !advancedSearchOpen;
+    var panel = document.getElementById("advancedSearchPanel");
+    if (panel) panel.classList.toggle("open", advancedSearchOpen);
+    var btn = document.getElementById("btnAdvancedSearch");
+    if (btn) btn.classList.toggle("has-filters", activeTagFilters.length > 0);
+    if (advancedSearchOpen) renderAdvancedSearchTags();
+}
+
+function renderAdvancedSearchTags() {
+    var container = document.getElementById("advSearchTags");
+    if (!container) return;
+    var html = '';
+    var groups = [
+        { key: "diet", label: "🥗 " + t("tags.diet"), tags: TAG_GROUPS.diet, prefix: "tag.diet." },
+        { key: "allergen", label: "⚠️ " + t("tags.allergen"), tags: TAG_GROUPS.allergen, prefix: "tag.allergen." },
+        { key: "style", label: "🍽️ " + t("tags.style"), tags: TAG_GROUPS.style, prefix: "tag.style." }
+    ];
+    for (var g = 0; g < groups.length; g++) {
+        var group = groups[g];
+        html += '<div class="tags-group"><div class="tags-group-title">' + group.label + '</div><div class="tags-container">';
+        for (var i = 0; i < group.tags.length; i++) {
+            var tag = group.tags[i];
+            var active = activeTagFilters.indexOf(tag) !== -1;
+            var label = t(group.prefix + tag) || tag;
+            html += '<button type="button" class="tag-chip' + (active ? ' active' : '') + '" onclick="toggleSearchTag(\'' + tag + '\')">' + label + '</button>';
+        }
+        html += '</div></div>';
+    }
+    container.innerHTML = html;
+}
+
+function toggleSearchTag(tag) {
+    var idx = activeTagFilters.indexOf(tag);
+    if (idx !== -1) {
+        activeTagFilters.splice(idx, 1);
+    } else {
+        activeTagFilters.push(tag);
+    }
+    renderAdvancedSearchTags();
+    var btn = document.getElementById("btnAdvancedSearch");
+    if (btn) btn.classList.toggle("has-filters", activeTagFilters.length > 0);
+    mostraRicette();
+}
+
+function clearTagFilters() {
+    activeTagFilters = [];
+    renderAdvancedSearchTags();
+    var btn = document.getElementById("btnAdvancedSearch");
+    if (btn) btn.classList.remove("has-filters");
+    mostraRicette();
 }
 
 function inizializzaFiltri() {

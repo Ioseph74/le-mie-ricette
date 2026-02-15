@@ -3,6 +3,15 @@ var ricettaId = null;
 var valutazioneCorrente = 0;
 var difficoltaCorrente = 1;
 var fotoBase64 = null;
+var isPublic = true;
+var selectedTags = [];
+
+// Tag definitions
+var TAG_GROUPS = {
+    diet: ["vegetarian", "vegan", "keto", "low-carb", "paleo", "mediterranean", "low-fat", "high-protein", "whole30"],
+    allergen: ["gluten-free", "lactose-free", "dairy-free", "nut-free", "egg-free", "soy-free", "sugar-free", "shellfish-free"],
+    style: ["quick", "no-cook", "kid-friendly", "light", "comfort-food", "meal-prep", "one-pot", "budget", "gourmet"]
+};
 
 var UNITA = ["g", "kg", "ml", "L", "cucchiai", "cucchiaini", "tazze", "pz", "spicchi", "fette", "pizzico", "q.b."];
 
@@ -58,6 +67,8 @@ document.addEventListener("DOMContentLoaded", function() {
         inizializzaFoto();
         inizializzaStelle();
         inizializzaDifficolta();
+        inizializzaVisibilita();
+        renderTags();
     });
 });
 
@@ -330,6 +341,15 @@ async function caricaDatiRicetta() {
                 };
             });
         }
+
+        // Load visibility
+        isPublic = ricetta.pubblica !== false; // default true
+        var toggle = document.getElementById("isPublic");
+        if (toggle) toggle.checked = isPublic;
+        aggiornaVisibilitaLabel();
+
+        // Load tags
+        selectedTags = ricetta.tags || [];
 
     } catch (error) {
         console.error("Loading error:", error);
@@ -744,6 +764,8 @@ async function salva() {
         pesoPorzione: parseInt(document.getElementById("pesoPorzione").value) || 0,
         valutazione: valutazioneCorrente,
         foto: fotoBase64 || null,
+        pubblica: isPublic,
+        tags: selectedTags,
         note: document.getElementById("note").value.trim(),
         ingredienti: ingredienti
             .filter(function(i) { return i.nome && i.nome.trim() !== ""; })
@@ -780,6 +802,75 @@ async function salva() {
         console.error("Save error:", error);
         mostraToast(t("toast.saveError"), "error");
     }
+}
+
+// ========================================
+// VISIBILITY TOGGLE
+// ========================================
+
+function inizializzaVisibilita() {
+    var toggle = document.getElementById("isPublic");
+    if (!toggle) return;
+    toggle.checked = isPublic;
+    aggiornaVisibilitaLabel();
+    toggle.addEventListener("change", function() {
+        isPublic = toggle.checked;
+        aggiornaVisibilitaLabel();
+    });
+}
+
+function aggiornaVisibilitaLabel() {
+    var label = document.getElementById("visibilityLabel");
+    if (!label) return;
+    if (isPublic) {
+        label.innerHTML = '<i class="fas fa-globe" style="color:var(--primary);"></i> ' + t("visibility.public");
+    } else {
+        label.innerHTML = '<i class="fas fa-lock" style="color:var(--text-light);"></i> ' + t("visibility.private");
+    }
+}
+
+// ========================================
+// TAGS
+// ========================================
+
+function renderTags() {
+    renderTagGroup("tagsDiet", TAG_GROUPS.diet, "tag.diet.");
+    renderTagGroup("tagsAllergen", TAG_GROUPS.allergen, "tag.allergen.");
+    renderTagGroup("tagsStyle", TAG_GROUPS.style, "tag.style.");
+    // Translate group titles
+    var dt = document.getElementById("tagsDietTitle");
+    if (dt) dt.textContent = "🥗 " + t("tags.diet");
+    var at = document.getElementById("tagsAllergenTitle");
+    if (at) at.textContent = "⚠️ " + t("tags.allergen");
+    var st = document.getElementById("tagsStyleTitle");
+    if (st) st.textContent = "🍽️ " + t("tags.style");
+    var tt = document.getElementById("tagsTitle");
+    if (tt) tt.textContent = t("tags.title");
+    var vt = document.getElementById("visibilityTitle");
+    if (vt) vt.textContent = t("visibility.title");
+}
+
+function renderTagGroup(containerId, tags, prefix) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    var html = "";
+    for (var i = 0; i < tags.length; i++) {
+        var tag = tags[i];
+        var isActive = selectedTags.indexOf(tag) !== -1;
+        var label = t(prefix + tag) || tag;
+        html += '<button type="button" class="tag-chip' + (isActive ? ' active' : '') + '" data-tag="' + tag + '" onclick="toggleTag(\'' + tag + '\')">' + label + '</button>';
+    }
+    container.innerHTML = html;
+}
+
+function toggleTag(tag) {
+    var idx = selectedTags.indexOf(tag);
+    if (idx !== -1) {
+        selectedTags.splice(idx, 1);
+    } else {
+        selectedTags.push(tag);
+    }
+    renderTags();
 }
 
 function annulla() {

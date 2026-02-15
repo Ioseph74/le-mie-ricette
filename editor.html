@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recipe Editor</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23e85d26'/%3E%3Ctext y='.9em' x='50' text-anchor='middle' font-size='70'%3E🍽️%3C/text%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23e85d26'/%3E%3Ctext y='.9em' x='50' text-anchor='middle' font-size='70'%3E🍽️%3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="style.css?v=7">
     <link rel="stylesheet" href="editor.css?v=7">
     <link rel="stylesheet" href="auth.css?v=7">
@@ -126,6 +127,35 @@
                         <label id="lblServingWeight">Serving weight (g)</label>
                         <input type="number" id="pesoPorzione" min="0" placeholder="e.g. 150">
                     </div>
+                </div>
+            </section>
+
+            <!-- VISIBILITY -->
+            <section class="editor-section">
+                <h3 class="section-title"><i class="fas fa-eye"></i> <span id="visibilityTitle">Visibility</span></h3>
+                <div class="visibility-toggle">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="isPublic" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="visibility-label" id="visibilityLabel">Public — visible to everyone</span>
+                </div>
+            </section>
+
+            <!-- TAGS -->
+            <section class="editor-section">
+                <h3 class="section-title"><i class="fas fa-tags"></i> <span id="tagsTitle">Tags</span></h3>
+                <div class="tags-group">
+                    <div class="tags-group-title" id="tagsDietTitle">🥗 Diet</div>
+                    <div class="tags-container" id="tagsDiet"></div>
+                </div>
+                <div class="tags-group">
+                    <div class="tags-group-title" id="tagsAllergenTitle">⚠️ Allergen Free</div>
+                    <div class="tags-container" id="tagsAllergen"></div>
+                </div>
+                <div class="tags-group">
+                    <div class="tags-group-title" id="tagsStyleTitle">🍽️ Style</div>
+                    <div class="tags-container" id="tagsStyle"></div>
                 </div>
             </section>
 

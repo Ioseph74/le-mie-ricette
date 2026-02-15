@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Recipes</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23e85d26'/%3E%3Ctext y='.9em' x='50' text-anchor='middle' font-size='70'%3E🍽️%3C/text%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23e85d26'/%3E%3Ctext y='.9em' x='50' text-anchor='middle' font-size='70'%3E🍽️%3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="style.css?v=7">
     <link rel="stylesheet" href="auth.css?v=7">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -25,6 +26,9 @@
             <div class="search-bar">
                 <i class="fas fa-search"></i>
                 <input type="text" id="searchInput" placeholder="Search recipe or ingredient..." aria-label="Search recipe or ingredient">
+                <button class="advanced-search-toggle" id="btnAdvancedSearch" onclick="toggleAdvancedSearch()" title="Advanced Search">
+                    <i class="fas fa-filter"></i>
+                </button>
             </div>
             <button class="btn-new auth-only" onclick="window.location.href='editor.html'" aria-label="New Recipe" id="btnNewRecipe">
                 <i class="fas fa-plus"></i> <span>New Recipe</span>
@@ -64,6 +68,17 @@
     </section>
 
     <div id="userFilterContainer"></div>
+
+    <div class="advanced-search-panel" id="advancedSearchPanel">
+        <div class="advanced-search-inner">
+            <h4><i class="fas fa-filter"></i> <span id="advSearchTitle">Filter by Tags</span></h4>
+            <div id="advSearchTags"></div>
+            <div class="advanced-search-actions">
+                <button class="btn-secondary" onclick="clearTagFilters()" id="btnClearFilters"><i class="fas fa-times"></i> Clear</button>
+            </div>
+        </div>
+    </div>
+
     <main class="recipes-grid" id="recipesGrid"></main>
 
     <div class="empty-state" id="emptyState" style="display: none;">
