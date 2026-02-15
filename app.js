@@ -157,8 +157,11 @@ function creaCard(ricetta) {
     }
 
     var authorHtml = "";
-    if (ricetta.autoreNome && !isOwner) {
-        authorHtml = '<div class="recipe-card-author"><i class="fas fa-user"></i> ' + escapeHtml(ricetta.autoreNome) + '</div>';
+    if (ricetta.autoreNome) {
+        authorHtml = '<div class="recipe-card-author"><i class="fas fa-user"></i> ' + escapeHtml(ricetta.autoreNome) +
+            (isOwner ? ' <span style="color:var(--primary);font-weight:600;">(' + t("filter.mine").replace(/^.*\s/, "") + ')</span>' : '') +
+            (ricetta.pubblica === false ? ' <i class="fas fa-lock" style="font-size:0.65rem;color:var(--text-light);margin-left:4px;" title="' + t("visibility.private") + '"></i>' : '') +
+            '</div>';
     }
 
     return '<div class="recipe-card" onclick="apriRicetta(\'' + ricetta.id + '\')">' +
