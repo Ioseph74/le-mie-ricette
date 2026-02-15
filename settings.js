@@ -87,12 +87,34 @@ async function renderSettings(user) {
     container.innerHTML = html;
 }
 
-function changeSettingsLang(code) {
+async function changeSettingsLang(code) {
     setLanguage(code);
+    // Save to Firestore
+    if (auth.currentUser) {
+        try {
+            await db.collection("userPreferences").doc(auth.currentUser.uid).set(
+                { language: code, updatedAt: new Date().toISOString() },
+                { merge: true }
+            );
+        } catch (e) {
+            console.warn("Could not save language preference:", e);
+        }
+    }
     window.location.reload();
 }
 
-function changeSettingsUnits(system) {
+async function changeSettingsUnits(system) {
     setUnitSystem(system);
+    // Save to Firestore
+    if (auth.currentUser) {
+        try {
+            await db.collection("userPreferences").doc(auth.currentUser.uid).set(
+                { unitSystem: system, updatedAt: new Date().toISOString() },
+                { merge: true }
+            );
+        } catch (e) {
+            console.warn("Could not save unit preference:", e);
+        }
+    }
     mostraToast(t("settings.saved"), "success");
 }

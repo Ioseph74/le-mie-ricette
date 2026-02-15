@@ -47,8 +47,39 @@ function isLoggato() {
 
 // Ascolta cambi di stato auth
 function initAuth(callback) {
-    auth.onAuthStateChanged(function(user) {
+    auth.onAuthStateChanged(async function(user) {
         aggiornaUIAuth(user);
+        if (user) {
+            // Load user preferences from Firestore
+            try {
+                var prefDoc = await db.collection("userPreferences").doc(user.uid).get();
+                if (prefDoc.exists) {
+                    var prefs = prefDoc.data();
+                    // Apply language if different from current
+                    if (prefs.language && prefs.language !== currentLanguage) {
+                        currentLanguage = prefs.language;
+                        localStorage.setItem(I18N_STORAGE_KEY, prefs.language);
+                        document.documentElement.lang = prefs.language;
+                        // Reload to apply translations
+                        if (callback) callback(user);
+                        window.location.reload();
+                        return;
+                    }
+                    // Apply unit system
+                    if (prefs.unitSystem && typeof setUnitSystem === "function") {
+                        var stored = localStorage.getItem("unitSystem");
+                        if (prefs.unitSystem !== stored) {
+                            localStorage.setItem("unitSystem", prefs.unitSystem);
+                            if (typeof currentUnitSystem !== "undefined") {
+                                currentUnitSystem = prefs.unitSystem;
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn("Could not load user preferences:", e);
+            }
+        }
         if (callback) callback(user);
     });
 }
