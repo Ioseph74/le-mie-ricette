@@ -230,9 +230,13 @@ async function importFromUrl() {
         var prompt = "You are a recipe extraction expert. Below is the TEXT CONTENT extracted from a recipe webpage. " +
             "Extract the recipe data EXACTLY as written on the page. Do NOT invent or modify any data. " +
             "Use ONLY information found in the text below. If some fields are not available, leave them as default values. " +
+            "CRITICAL RULE for ingredients: ALL ingredients MUST use grams (g) as the unit. " +
+            "Convert piece-based items to their approximate gram weight (e.g. 1 egg=60g, 1 apple=180g, 1 onion=150g, 1 garlic clove=5g, 1 potato=200g, 1 carrot=80g, 1 tomato=150g). " +
+            "For liquids use ml or L. NEVER use 'pz' (pieces) as a unit. " +
+            "In the ingredient name, mention the number of pieces for clarity (e.g. 'Eggs (3)' with 180g). " +
             "Return ONLY a valid JSON object (no markdown, no explanation) with this exact structure: " +
             '{"titolo":"recipe name from the page","categoria":"one of: antipasti,primi,secondi,contorni,dolci,pane-e-lievitati,salse-e-condimenti,bevande,conserve,base",' +
-            '"difficolta":1,"tempoPreparazione":0,"tempoCottura":0,"porzioniOriginali":4,"pesoPorzione":0,' +
+            '"difficolta":1,"tempoPreparazione":0,"tempoCottura":0,"porzioniOriginali":4,' +
             '"ingredienti":[{"nome":"ingredient name","quantita":100,"unita":"g"}],' +
             '"preparazioni":[{"titolo":"Preparation","ingredientiUsati":[],"passi":[{"testo":"step text","foto":null}]}],' +
             '"note":"any notes from the page","valutazione":0}' +
@@ -327,9 +331,13 @@ async function importFromPdf(inputEl) {
         var prompt = "You are a recipe extraction expert. Below is TEXT extracted from a PDF file containing a recipe. " +
             "Extract the recipe data EXACTLY as written. Do NOT invent or modify any data. " +
             "Write the output in " + langName + ". " +
+            "CRITICAL RULE for ingredients: ALL ingredients MUST use grams (g) as the unit. " +
+            "Convert piece-based items to their approximate gram weight (e.g. 1 egg=60g, 1 apple=180g, 1 onion=150g, 1 garlic clove=5g, 1 potato=200g, 1 carrot=80g, 1 tomato=150g). " +
+            "For liquids use ml or L. NEVER use 'pz' (pieces) as a unit. " +
+            "In the ingredient name, mention the number of pieces for clarity (e.g. 'Eggs (3)' with 180g). " +
             "Return ONLY a valid JSON object (no markdown, no explanation) with this exact structure: " +
             '{"titolo":"recipe name","categoria":"one of: antipasti,primi,secondi,contorni,dolci,pane-e-lievitati,salse-e-condimenti,bevande,conserve,base",' +
-            '"difficolta":1,"tempoPreparazione":0,"tempoCottura":0,"porzioniOriginali":4,"pesoPorzione":150,' +
+            '"difficolta":1,"tempoPreparazione":0,"tempoCottura":0,"porzioniOriginali":4,' +
             '"ingredienti":[{"nome":"ingredient name","quantita":100,"unita":"g"}],' +
             '"preparazioni":[{"titolo":"Preparation","ingredientiUsati":[],"passi":[{"testo":"step text","foto":null}]}],' +
             '"note":"any notes","valutazione":0,' +
@@ -1080,9 +1088,15 @@ async function aiGenerateRecipe() {
 
         var aiPrompt = "You are a professional chef. Create a complete recipe based on this request: \"" + prompt + "\"\n" +
             "Write ALL text in " + langName + ".\n" +
+            "CRITICAL RULE for ingredients: ALL ingredients MUST use grams (g) as the unit. " +
+            "Convert piece-based items to their approximate gram weight. Examples: " +
+            "1 egg = 60g, 1 apple = 180g, 1 pepper = 150g, 1 onion = 150g, 1 lemon = 80g, 1 garlic clove = 5g, " +
+            "1 banana = 120g, 1 potato = 200g, 1 carrot = 80g, 1 tomato = 150g, 1 zucchini = 200g. " +
+            "For liquids use ml or L. For spices/salt use g. NEVER use 'pz' (pieces) as a unit. " +
+            "Write the item name to indicate what it is (e.g. 'Eggs' with 180g for 3 eggs).\n" +
             "Return ONLY a valid JSON object (no markdown, no explanation) with this exact structure:\n" +
             '{"titolo":"recipe name","categoria":"one of: antipasti,primi,secondi,contorni,dolci,pane-e-lievitati,salse-e-condimenti,bevande,conserve,base",' +
-            '"difficolta":1,"tempoPreparazione":0,"tempoCottura":0,"porzioniOriginali":4,"pesoPorzione":150,' +
+            '"difficolta":1,"tempoPreparazione":0,"tempoCottura":0,"porzioniOriginali":4,' +
             '"ingredienti":[{"nome":"ingredient name","quantita":100,"unita":"g"}],' +
             '"preparazioni":[{"titolo":"Preparation","ingredientiUsati":[],"passi":[{"testo":"step text","foto":null}]}],' +
             '"note":"tips and notes","valutazione":0,' +
@@ -1176,12 +1190,15 @@ async function aiImproveRecipe() {
             JSON.stringify(currentRecipe, null, 2) + "\n\n" +
             "The user requests: \"" + request + "\"\n\n" +
             "Apply the requested changes. Keep all existing data that doesn't need to change. " +
-            "IMPORTANT: Calculate pesoPorzione (weight per serving in grams) based on total ingredient weights divided by porzioniOriginali. " +
+            "CRITICAL RULE for ingredients: ALL ingredients MUST use grams (g) as the unit. " +
+            "Convert piece-based items to their approximate gram weight (e.g. 1 egg=60g, 1 apple=180g, 1 onion=150g, 1 garlic clove=5g, 1 potato=200g). " +
+            "For liquids use ml or L. NEVER use 'pz' (pieces) as a unit. " +
+            "In the ingredient name, mention the number of pieces for clarity (e.g. 'Eggs (3)' with 180g). " +
             "Make sure porzioniOriginali is a reasonable number for the recipe. " +
             "Write ALL text in " + langName + ".\n" +
             "Return ONLY the updated recipe as a valid JSON object (no markdown, no explanation) with this exact structure:\n" +
             '{"titolo":"...","categoria":"...","difficolta":1,"tempoPreparazione":0,"tempoCottura":0,' +
-            '"porzioniOriginali":4,"pesoPorzione":150,' +
+            '"porzioniOriginali":4,' +
             '"ingredienti":[{"nome":"...","quantita":100,"unita":"g"}],' +
             '"preparazioni":[{"titolo":"...","ingredientiUsati":[],"passi":[{"testo":"...","foto":null}]}],' +
             '"note":"...","valutazione":0,' +
