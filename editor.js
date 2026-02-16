@@ -418,6 +418,9 @@ function populateFromImport(ricetta) {
         }
         renderPreparazioni();
     }
+
+    // Auto-calculate serving weight from ingredients
+    aggiornaPesoPorzione();
 }
 
 // ========================================
@@ -592,8 +595,8 @@ function renderIngredienteRow(idx, item) {
     }
     return '<div class="ingrediente-row">' +
         '<input type="text" class="ing-nome" value="' + nomeEscaped + '" placeholder="' + t("editor.ingredientPlaceholder") + '" onchange="ingredienti[' + idx + '].nome=this.value; aggiornaSelectPreparazioni()">' +
-        '<input type="number" class="ing-qta" value="' + (item.quantita || '') + '" placeholder="' + t("editor.qty") + '" step="any" onchange="ingredienti[' + idx + '].quantita=this.value">' +
-        '<select class="ing-unita" onchange="ingredienti[' + idx + '].unita=this.value">' + unitaOptions + '</select>' +
+        '<input type="number" class="ing-qta" value="' + (item.quantita || '') + '" placeholder="' + t("editor.qty") + '" step="any" onchange="ingredienti[' + idx + '].quantita=this.value; aggiornaPesoPorzione()">' +
+        '<select class="ing-unita" onchange="ingredienti[' + idx + '].unita=this.value; aggiornaPesoPorzione()">' + unitaOptions + '</select>' +
         '<button class="btn-remove-ing" onclick="rimuoviIngrediente(' + idx + ')" title="' + t("editor.removeIngredient") + '" aria-label="' + t("editor.removeIngredient") + '"><i class="fas fa-times"></i></button>' +
         '</div>';
 }
@@ -617,6 +620,7 @@ function rimuoviIngrediente(idx) {
     }
     renderIngredienti();
     aggiornaSelectPreparazioni();
+    aggiornaPesoPorzione();
 }
 
 function sincronizzaIngredienti() {
@@ -881,14 +885,19 @@ async function salva() {
 
     sincronizzaTutto();
 
+    // Auto-calculate pesoPorzione from ingredient weights
+    var porzioni = parseInt(document.getElementById("porzioniOriginali").value) || 1;
+    var pesoTotale = calcolaPesoTotaleEditor(ingredienti);
+    var pesoPorzioneCalcolato = porzioni > 0 ? Math.round(pesoTotale / porzioni) : 0;
+
     var ricetta = {
         titolo: titolo,
         categoria: document.getElementById("categoria").value,
         difficolta: difficoltaCorrente,
         tempoPreparazione: parseInt(document.getElementById("tempoPreparazione").value) || 0,
         tempoCottura: parseInt(document.getElementById("tempoCottura").value) || 0,
-        porzioniOriginali: parseInt(document.getElementById("porzioniOriginali").value) || 1,
-        pesoPorzione: parseInt(document.getElementById("pesoPorzione").value) || 0,
+        porzioniOriginali: porzioni,
+        pesoPorzione: pesoPorzioneCalcolato,
         valutazione: valutazioneCorrente,
         foto: fotoBase64 || null,
         pubblica: isPublic,
@@ -1220,6 +1229,37 @@ async function aiImproveRecipe() {
         statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#e53e3e;"></i> ' + (error.message || t("ai.improve.error"));
         setTimeout(function() { statusEl.style.display = "none"; }, 6000);
     }
+}
+
+// ========================================
+// AUTO-CALCULATE SERVING WEIGHT
+// ========================================
+
+function calcolaPesoTotaleEditor(listaIngredienti) {
+    var totaleGrammi = 0;
+    for (var i = 0; i < listaIngredienti.length; i++) {
+        var item = listaIngredienti[i];
+        if (!item.quantita || !item.nome || item.nome.trim() === "") continue;
+        var qta = parseFloat(item.quantita);
+        if (isNaN(qta)) continue;
+        switch (item.unita) {
+            case "g": totaleGrammi += qta; break;
+            case "kg": totaleGrammi += qta * 1000; break;
+            case "ml": totaleGrammi += qta; break;
+            case "L": totaleGrammi += qta * 1000; break;
+            // Other units (pz, cucchiai, etc.) can't be summed in grams
+        }
+    }
+    return totaleGrammi;
+}
+
+function aggiornaPesoPorzione() {
+    sincronizzaIngredienti();
+    var porzioni = parseInt(document.getElementById("porzioniOriginali").value) || 1;
+    var pesoTotale = calcolaPesoTotaleEditor(ingredienti);
+    var pesoPorzione = porzioni > 0 ? Math.round(pesoTotale / porzioni) : 0;
+    var pesoField = document.getElementById("pesoPorzione");
+    if (pesoField) pesoField.value = pesoPorzione > 0 ? pesoPorzione : "";
 }
 
 function annulla() {

@@ -118,11 +118,8 @@ async function caricaVista(id) {
         preparazioniOriginali = JSON.parse(JSON.stringify(ricettaCorrente.preparazioni));
         preparazioniCorrette = JSON.parse(JSON.stringify(preparazioniOriginali));
         porzioniOriginali = ricettaCorrente.porzioniOriginali || 1;
-        if (ricettaCorrente.pesoPorzione && ricettaCorrente.pesoPorzione > 0) {
-            pesoOriginalePorzione = ricettaCorrente.pesoPorzione;
-        } else {
-            pesoOriginalePorzione = calcolaPesoTotalePiatto(ingredientiOriginali, porzioniOriginali);
-        }
+        // Always calculate total weight from ingredients, then derive serving weight
+        pesoOriginalePorzione = calcolaPesoTotalePiatto(ingredientiOriginali, porzioniOriginali);
         renderHero();
         renderCalcolo();
         renderIngredienti();
