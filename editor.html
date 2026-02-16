@@ -47,34 +47,21 @@
         <!-- LEFT COLUMN -->
         <div class="editor-col">
 
-            <!-- AI GENERATE / IMPORT -->
-            <section class="editor-section import-section" id="importSection">
+            <!-- AI CREATE: shown only in NEW mode -->
+            <section class="editor-section import-section ai-create-section" id="aiCreateSection">
                 <h3 class="section-title"><i class="fas fa-robot"></i> <span id="aiGenerateTitle">AI Assistant</span></h3>
                 
                 <!-- Generate from prompt -->
                 <div class="ai-gen-group">
                     <label class="ai-gen-label" id="aiGenLabel"><i class="fas fa-magic"></i> Generate a recipe from a description</label>
-                    <div class="import-row">
-                        <input type="text" id="aiPromptInput" class="import-input" placeholder="e.g. A vegan chocolate cake for 6 people...">
-                        <button class="btn-primary btn-import" onclick="aiGenerateRecipe()" id="btnAiGenerate">
-                            <i class="fas fa-wand-magic-sparkles"></i> <span id="btnAiGenText">Generate</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Improve existing -->
-                <div class="ai-gen-group" style="margin-top:12px;">
-                    <label class="ai-gen-label" id="aiImproveLabel"><i class="fas fa-spell-check"></i> Correct & improve current recipe</label>
-                    <div class="import-row">
-                        <input type="text" id="aiImproveInput" class="import-input" placeholder="e.g. Make it gluten-free, fix step 3...">
-                        <button class="btn-primary btn-import" onclick="aiImproveRecipe()" id="btnAiImprove">
-                            <i class="fas fa-check-double"></i> <span id="btnAiImproveText">Improve</span>
-                        </button>
-                    </div>
+                    <textarea id="aiPromptInput" class="ai-textarea" rows="3" placeholder="e.g. A vegan chocolate cake for 6 people, with dark chocolate ganache..."></textarea>
+                    <button class="btn-primary btn-ai-action" onclick="aiGenerateRecipe()" id="btnAiGenerate">
+                        <i class="fas fa-wand-magic-sparkles"></i> <span id="btnAiGenText">Generate Recipe</span>
+                    </button>
                 </div>
 
                 <!-- Import from URL -->
-                <div class="ai-gen-group" style="margin-top:12px;">
+                <div class="ai-gen-group" style="margin-top:16px;">
                     <label class="ai-gen-label" id="importLabel"><i class="fas fa-globe"></i> <span id="importTitle">Import from Web</span></label>
                     <div class="import-row">
                         <input type="text" id="importUrl" class="import-input" placeholder="Paste recipe URL...">
@@ -85,6 +72,22 @@
                 </div>
 
                 <div id="importStatus" class="import-status" style="display:none;"></div>
+            </section>
+
+            <!-- AI EDIT: shown only in EDIT mode -->
+            <section class="editor-section import-section ai-edit-section" id="aiEditSection" style="display:none;">
+                <h3 class="section-title"><i class="fas fa-robot"></i> <span id="aiImproveTitle2">AI Recipe Editor</span></h3>
+                <label class="ai-gen-label" id="aiImproveLabel"><i class="fas fa-spell-check"></i> Describe what to change or improve</label>
+                <textarea id="aiImproveInput" class="ai-textarea" rows="3" placeholder="e.g. Make it gluten-free, add more spices, fix step 3, reduce to 4 servings..."></textarea>
+                <div class="ai-edit-actions">
+                    <button class="btn-primary btn-ai-action" onclick="aiImproveRecipe()" id="btnAiImprove">
+                        <i class="fas fa-check-double"></i> <span id="btnAiImproveText">Apply Changes</span>
+                    </button>
+                    <button class="btn-secondary btn-ai-undo" id="btnAiUndo" onclick="aiUndoChanges()" style="display:none;">
+                        <i class="fas fa-undo"></i> <span id="btnAiUndoText">Undo AI Changes</span>
+                    </button>
+                </div>
+                <div id="importStatusEdit" class="import-status" style="display:none;"></div>
             </section>
 
             <!-- PHOTO -->

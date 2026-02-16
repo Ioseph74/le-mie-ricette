@@ -259,7 +259,10 @@ var translations = {
     "ai.improve.improving": { en: "Improving recipe with AI...", it: "Miglioramento ricetta con AI...", fr: "Amelioration de la recette avec IA...", de: "Rezept wird mit KI verbessert...", es: "Mejorando receta con IA..." },
     "ai.improve.success": { en: "Recipe improved! Review the changes.", it: "Ricetta migliorata! Rivedi le modifiche.", fr: "Recette amelioree! Verifiez les modifications.", de: "Rezept verbessert! Ueberpruefen Sie die Aenderungen.", es: "Receta mejorada! Revise los cambios." },
     "ai.improve.error": { en: "Error improving recipe. Try again.", it: "Errore nel miglioramento. Riprova.", fr: "Erreur d'amelioration. Reessayez.", de: "Fehler bei der Verbesserung. Erneut versuchen.", es: "Error al mejorar. Intentelo de nuevo." },
-    "ai.improve.noRecipe": { en: "Add a title or ingredients first", it: "Aggiungi prima un titolo o degli ingredienti", fr: "Ajoutez d'abord un titre ou des ingredients", de: "Fuegen Sie zuerst einen Titel oder Zutaten hinzu", es: "Agregue primero un titulo o ingredientes" }
+    "ai.improve.noRecipe": { en: "Add a title or ingredients first", it: "Aggiungi prima un titolo o degli ingredienti", fr: "Ajoutez d'abord un titre ou des ingredients", de: "Fuegen Sie zuerst einen Titel oder Zutaten hinzu", es: "Agregue primero un titulo o ingredientes" },
+    "ai.improve.undone": { en: "AI changes undone", it: "Modifiche AI annullate", fr: "Modifications IA annulees", de: "KI-Aenderungen rueckgaengig gemacht", es: "Cambios IA deshechos" },
+    "ai.improve.undo": { en: "Undo AI Changes", it: "Annulla modifiche AI", fr: "Annuler modifications IA", de: "KI-Aenderungen rueckgaengig", es: "Deshacer cambios IA" },
+    "ai.editor.title": { en: "AI Recipe Editor", it: "Editor Ricetta AI", fr: "Editeur Recette IA", de: "KI-Rezepteditor", es: "Editor Receta IA" }
 };
 
 // ========================================

@@ -58,8 +58,14 @@ document.addEventListener("DOMContentLoaded", function() {
         if (ricettaId) {
             editMode = true;
             document.getElementById("editorTitle").textContent = t("editor.editRecipe");
-            document.getElementById("importSection").style.display = "none";
+            // Show AI edit section, hide AI create section
+            document.getElementById("aiCreateSection").style.display = "none";
+            document.getElementById("aiEditSection").style.display = "block";
             await caricaDatiRicetta();
+        } else {
+            // New mode: show create, hide edit
+            document.getElementById("aiCreateSection").style.display = "block";
+            document.getElementById("aiEditSection").style.display = "none";
         }
 
         renderIngredienti();
@@ -150,6 +156,10 @@ function applyEditorTranslations() {
     if (btnAiImproveText) btnAiImproveText.textContent = t("ai.improve.button");
     var importLabel = document.getElementById("importLabel");
     if (importLabel) importLabel.innerHTML = '<i class="fas fa-globe"></i> ' + t("import.title");
+    var aiImproveTitle2 = document.getElementById("aiImproveTitle2");
+    if (aiImproveTitle2) aiImproveTitle2.textContent = t("ai.editor.title");
+    var btnAiUndoText = document.getElementById("btnAiUndoText");
+    if (btnAiUndoText) btnAiUndoText.textContent = t("ai.improve.undo");
 
     // Translate category options
     var catSelect = document.getElementById("categoria");
@@ -892,6 +902,54 @@ function toggleTag(tag) {
 }
 
 // ========================================
+// AI UNDO - save state before AI changes
+// ========================================
+var aiPreviousState = null;
+
+function aiSaveState() {
+    sincronizzaTutto();
+    aiPreviousState = {
+        titolo: document.getElementById("titolo").value,
+        categoria: document.getElementById("categoria").value,
+        difficolta: difficoltaCorrente,
+        tempoPreparazione: document.getElementById("tempoPreparazione").value,
+        tempoCottura: document.getElementById("tempoCottura").value,
+        porzioniOriginali: document.getElementById("porzioniOriginali").value,
+        pesoPorzione: document.getElementById("pesoPorzione").value,
+        note: document.getElementById("note").value,
+        valutazione: valutazioneCorrente,
+        ingredienti: JSON.parse(JSON.stringify(ingredienti)),
+        preparazioni: JSON.parse(JSON.stringify(preparazioni)),
+        tags: selectedTags.slice()
+    };
+}
+
+function aiUndoChanges() {
+    if (!aiPreviousState) return;
+    document.getElementById("titolo").value = aiPreviousState.titolo;
+    document.getElementById("categoria").value = aiPreviousState.categoria;
+    difficoltaCorrente = aiPreviousState.difficolta;
+    aggiornaDifficolta();
+    document.getElementById("tempoPreparazione").value = aiPreviousState.tempoPreparazione;
+    document.getElementById("tempoCottura").value = aiPreviousState.tempoCottura;
+    document.getElementById("porzioniOriginali").value = aiPreviousState.porzioniOriginali;
+    document.getElementById("pesoPorzione").value = aiPreviousState.pesoPorzione;
+    document.getElementById("note").value = aiPreviousState.note;
+    valutazioneCorrente = aiPreviousState.valutazione;
+    aggiornaStelle();
+    ingredienti = aiPreviousState.ingredienti;
+    preparazioni = aiPreviousState.preparazioni;
+    selectedTags = aiPreviousState.tags;
+    renderIngredienti();
+    renderPreparazioni();
+    renderTags();
+    aiPreviousState = null;
+    var undoBtn = document.getElementById("btnAiUndo");
+    if (undoBtn) undoBtn.style.display = "none";
+    mostraToast(t("ai.improve.undone"), "success");
+}
+
+// ========================================
 // AI GENERATE RECIPE
 // ========================================
 
@@ -916,7 +974,7 @@ async function aiGenerateRecipe() {
             "Write ALL text in " + langName + ".\n" +
             "Return ONLY a valid JSON object (no markdown, no explanation) with this exact structure:\n" +
             '{"titolo":"recipe name","categoria":"one of: antipasti,primi,secondi,contorni,dolci,pane-e-lievitati,salse-e-condimenti,bevande,conserve,base",' +
-            '"difficolta":1,"tempoPreparazione":0,"tempoCottura":0,"porzioniOriginali":4,"pesoPorzione":0,' +
+            '"difficolta":1,"tempoPreparazione":0,"tempoCottura":0,"porzioniOriginali":4,"pesoPorzione":150,' +
             '"ingredienti":[{"nome":"ingredient name","quantita":100,"unita":"g"}],' +
             '"preparazioni":[{"titolo":"Preparation","ingredientiUsati":[],"passi":[{"testo":"step text","foto":null}]}],' +
             '"note":"tips and notes","valutazione":0,' +
@@ -973,6 +1031,9 @@ async function aiImproveRecipe() {
         return;
     }
 
+    // Save state for undo
+    aiSaveState();
+
     sincronizzaTutto();
 
     // Build current recipe JSON
@@ -995,7 +1056,7 @@ async function aiImproveRecipe() {
         return;
     }
 
-    var statusEl = document.getElementById("importStatus");
+    var statusEl = document.getElementById("importStatusEdit");
     statusEl.style.display = "block";
     statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + t("ai.improve.improving");
 
@@ -1007,10 +1068,12 @@ async function aiImproveRecipe() {
             JSON.stringify(currentRecipe, null, 2) + "\n\n" +
             "The user requests: \"" + request + "\"\n\n" +
             "Apply the requested changes. Keep all existing data that doesn't need to change. " +
+            "IMPORTANT: Calculate pesoPorzione (weight per serving in grams) based on total ingredient weights divided by porzioniOriginali. " +
+            "Make sure porzioniOriginali is a reasonable number for the recipe. " +
             "Write ALL text in " + langName + ".\n" +
             "Return ONLY the updated recipe as a valid JSON object (no markdown, no explanation) with this exact structure:\n" +
             '{"titolo":"...","categoria":"...","difficolta":1,"tempoPreparazione":0,"tempoCottura":0,' +
-            '"porzioniOriginali":4,"pesoPorzione":0,' +
+            '"porzioniOriginali":4,"pesoPorzione":150,' +
             '"ingredienti":[{"nome":"...","quantita":100,"unita":"g"}],' +
             '"preparazioni":[{"titolo":"...","ingredientiUsati":[],"passi":[{"testo":"...","foto":null}]}],' +
             '"note":"...","valutazione":0,' +
@@ -1044,11 +1107,17 @@ async function aiImproveRecipe() {
             renderTags();
         }
 
+        // Show undo button
+        var undoBtn = document.getElementById("btnAiUndo");
+        if (undoBtn) undoBtn.style.display = "inline-flex";
+
         statusEl.style.display = "none";
         improveInput.value = "";
         mostraToast(t("ai.improve.success"), "success");
     } catch (error) {
         console.error("AI Improve error:", error);
+        // Restore state on error
+        if (aiPreviousState) aiUndoChanges();
         statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#e53e3e;"></i> ' + (error.message || t("ai.improve.error"));
         setTimeout(function() { statusEl.style.display = "none"; }, 6000);
     }
