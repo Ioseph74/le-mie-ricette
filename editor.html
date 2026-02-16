@@ -60,14 +60,20 @@
                     </button>
                 </div>
 
-                <!-- Import from URL -->
+                <!-- Import from URL or PDF -->
                 <div class="ai-gen-group" style="margin-top:16px;">
-                    <label class="ai-gen-label" id="importLabel"><i class="fas fa-globe"></i> <span id="importTitle">Import from Web</span></label>
+                    <label class="ai-gen-label" id="importLabel"><i class="fas fa-globe"></i> <span id="importTitle">Import from Web or PDF</span></label>
                     <div class="import-row">
                         <input type="text" id="importUrl" class="import-input" placeholder="Paste recipe URL...">
                         <button class="btn-primary btn-import" onclick="importFromUrl()" id="btnImport">
                             <i class="fas fa-download"></i> <span>Import</span>
                         </button>
+                    </div>
+                    <div class="import-row" style="margin-top:8px;">
+                        <label class="btn-secondary btn-import btn-pdf-upload" id="btnPdfLabel">
+                            <i class="fas fa-file-pdf"></i> <span id="btnPdfText">Import from PDF</span>
+                            <input type="file" id="pdfFileInput" accept=".pdf" style="display:none;" onchange="importFromPdf(this)">
+                        </label>
                     </div>
                 </div>
 
@@ -254,6 +260,12 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        if (typeof pdfjsLib !== "undefined") {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        }
+    </script>
     <script src="api-config.js?v=8"></script>
     <script src="firebase-config.js"></script>
     <script src="utils.js"></script>

@@ -626,3 +626,23 @@
     transition: all var(--transition);
 }
 .ai-edit-actions .btn-ai-undo:hover { background: #e53e3e; color: white; }
+
+/* PDF Upload Button */
+.btn-pdf-upload {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    width: 100%;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: 2px solid var(--border);
+    background: white;
+    color: var(--text);
+    transition: all var(--transition);
+}
+.btn-pdf-upload:hover { border-color: #e53e3e; color: #e53e3e; }
+.btn-pdf-upload i { color: #e53e3e; }

@@ -262,7 +262,14 @@ var translations = {
     "ai.improve.noRecipe": { en: "Add a title or ingredients first", it: "Aggiungi prima un titolo o degli ingredienti", fr: "Ajoutez d'abord un titre ou des ingredients", de: "Fuegen Sie zuerst einen Titel oder Zutaten hinzu", es: "Agregue primero un titulo o ingredientes" },
     "ai.improve.undone": { en: "AI changes undone", it: "Modifiche AI annullate", fr: "Modifications IA annulees", de: "KI-Aenderungen rueckgaengig gemacht", es: "Cambios IA deshechos" },
     "ai.improve.undo": { en: "Undo AI Changes", it: "Annulla modifiche AI", fr: "Annuler modifications IA", de: "KI-Aenderungen rueckgaengig", es: "Deshacer cambios IA" },
-    "ai.editor.title": { en: "AI Recipe Editor", it: "Editor Ricetta AI", fr: "Editeur Recette IA", de: "KI-Rezepteditor", es: "Editor Receta IA" }
+    "ai.editor.title": { en: "AI Recipe Editor", it: "Editor Ricetta AI", fr: "Editeur Recette IA", de: "KI-Rezepteditor", es: "Editor Receta IA" },
+    "import.titleWebPdf": { en: "Import from Web or PDF", it: "Importa dal Web o PDF", fr: "Importer du Web ou PDF", de: "Aus dem Web oder PDF importieren", es: "Importar de la Web o PDF" },
+    "import.pdf.button": { en: "Import from PDF", it: "Importa da PDF", fr: "Importer un PDF", de: "Aus PDF importieren", es: "Importar de PDF" },
+    "import.pdf.reading": { en: "Reading PDF...", it: "Lettura PDF...", fr: "Lecture du PDF...", de: "PDF wird gelesen...", es: "Leyendo PDF..." },
+    "import.pdf.noText": { en: "No text found in the PDF. It may be a scanned image.", it: "Nessun testo trovato nel PDF. Potrebbe essere un'immagine scannerizzata.", fr: "Aucun texte trouve dans le PDF. Il peut s'agir d'une image scannee.", de: "Kein Text im PDF gefunden. Es koennte ein gescanntes Bild sein.", es: "No se encontro texto en el PDF. Puede ser una imagen escaneada." },
+    "import.pdf.success": { en: "Recipe imported from PDF!", it: "Ricetta importata dal PDF!", fr: "Recette importee du PDF!", de: "Rezept aus PDF importiert!", es: "Receta importada del PDF!" },
+    "import.pdf.error": { en: "Error reading PDF. Try another file.", it: "Errore nella lettura del PDF. Prova un altro file.", fr: "Erreur de lecture du PDF. Essayez un autre fichier.", de: "Fehler beim Lesen der PDF. Versuchen Sie eine andere Datei.", es: "Error al leer el PDF. Intente con otro archivo." },
+    "import.pdf.invalidFile": { en: "Please select a PDF file", it: "Seleziona un file PDF", fr: "Veuillez selectionner un fichier PDF", de: "Bitte waehlen Sie eine PDF-Datei", es: "Seleccione un archivo PDF" }
 };
 
 // ========================================

@@ -155,7 +155,9 @@ function applyEditorTranslations() {
     var btnAiImproveText = document.getElementById("btnAiImproveText");
     if (btnAiImproveText) btnAiImproveText.textContent = t("ai.improve.button");
     var importLabel = document.getElementById("importLabel");
-    if (importLabel) importLabel.innerHTML = '<i class="fas fa-globe"></i> ' + t("import.title");
+    if (importLabel) importLabel.innerHTML = '<i class="fas fa-globe"></i> ' + t("import.titleWebPdf");
+    var btnPdfText = document.getElementById("btnPdfText");
+    if (btnPdfText) btnPdfText.textContent = t("import.pdf.button");
     var aiImproveTitle2 = document.getElementById("aiImproveTitle2");
     if (aiImproveTitle2) aiImproveTitle2.textContent = t("ai.editor.title");
     var btnAiUndoText = document.getElementById("btnAiUndoText");
@@ -274,6 +276,103 @@ async function importFromUrl() {
         statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#e53e3e;"></i> ' + (error.message || t("import.error"));
         setTimeout(function() { statusEl.style.display = "none"; }, 6000);
     }
+}
+
+// ========================================
+// IMPORT FROM PDF
+// ========================================
+
+async function importFromPdf(inputEl) {
+    var file = inputEl.files[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
+        mostraToast(t("import.pdf.invalidFile"), "error");
+        inputEl.value = "";
+        return;
+    }
+
+    var statusEl = document.getElementById("importStatus");
+    statusEl.style.display = "block";
+    statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + t("import.pdf.reading");
+
+    try {
+        // Step 1: Read PDF text with PDF.js
+        var arrayBuffer = await file.arrayBuffer();
+        var pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        var fullText = "";
+
+        for (var i = 1; i <= pdf.numPages; i++) {
+            var page = await pdf.getPage(i);
+            var textContent = await page.getTextContent();
+            var pageText = textContent.items.map(function(item) { return item.str; }).join(" ");
+            fullText += pageText + "\n";
+        }
+
+        if (!fullText || fullText.trim().length < 30) {
+            throw new Error(t("import.pdf.noText"));
+        }
+
+        // Limit text to avoid token limits
+        if (fullText.length > 6000) {
+            fullText = fullText.substring(0, 6000);
+        }
+
+        statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + t("import.analyzing");
+
+        // Step 2: Send text to AI for extraction
+        var langNames = { en: "English", it: "Italian", fr: "French", de: "German", es: "Spanish" };
+        var langName = langNames[currentLanguage] || "English";
+
+        var prompt = "You are a recipe extraction expert. Below is TEXT extracted from a PDF file containing a recipe. " +
+            "Extract the recipe data EXACTLY as written. Do NOT invent or modify any data. " +
+            "Write the output in " + langName + ". " +
+            "Return ONLY a valid JSON object (no markdown, no explanation) with this exact structure: " +
+            '{"titolo":"recipe name","categoria":"one of: antipasti,primi,secondi,contorni,dolci,pane-e-lievitati,salse-e-condimenti,bevande,conserve,base",' +
+            '"difficolta":1,"tempoPreparazione":0,"tempoCottura":0,"porzioniOriginali":4,"pesoPorzione":150,' +
+            '"ingredienti":[{"nome":"ingredient name","quantita":100,"unita":"g"}],' +
+            '"preparazioni":[{"titolo":"Preparation","ingredientiUsati":[],"passi":[{"testo":"step text","foto":null}]}],' +
+            '"note":"any notes","valutazione":0,' +
+            '"tags":["select appropriate tags from: vegetarian,vegan,keto,low-carb,paleo,mediterranean,low-fat,high-protein,whole30,gluten-free,lactose-free,dairy-free,nut-free,egg-free,soy-free,sugar-free,shellfish-free,quick,no-cook,kid-friendly,light,comfort-food,meal-prep,one-pot,budget,gourmet"]}' +
+            "\n\n--- PDF TEXT ---\n" + fullText;
+
+        var response = await fetch(AI_ENDPOINT, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + AI_API_KEY
+            },
+            body: JSON.stringify({
+                model: AI_MODEL,
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.1,
+                max_tokens: 4096
+            })
+        });
+
+        var data = await response.json();
+        if (!response.ok) throw new Error((data.error && data.error.message) || "API Error " + response.status);
+
+        var risposta = data.choices[0].message.content;
+        risposta = risposta.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+        var ricetta = JSON.parse(risposta);
+
+        populateFromImport(ricetta);
+        if (ricetta.tags && ricetta.tags.length > 0) {
+            selectedTags = ricetta.tags;
+            renderTags();
+        }
+
+        statusEl.style.display = "none";
+        mostraToast(t("import.pdf.success"), "success");
+
+    } catch (error) {
+        console.error("PDF Import error:", error);
+        statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#e53e3e;"></i> ' + (error.message || t("import.pdf.error"));
+        setTimeout(function() { statusEl.style.display = "none"; }, 6000);
+    }
+
+    inputEl.value = "";
 }
 
 function populateFromImport(ricetta) {
