@@ -569,3 +569,9 @@
 .passaggio-foto-preview .remove-step-foto:hover {
     background: #c53030;
 }
+
+/* AI ASSISTANT SECTION */
+.import-section { background: linear-gradient(135deg, #fff5f0, #fef3eb); border: 1px solid rgba(232,93,38,0.15); }
+.ai-gen-group { margin-bottom: 4px; }
+.ai-gen-label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.ai-gen-label i { color: var(--primary); margin-right: 4px; }

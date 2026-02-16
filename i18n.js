@@ -243,7 +243,23 @@ var translations = {
     "search.advanced": { en: "Advanced Search", it: "Ricerca Avanzata", fr: "Recherche Avancee", de: "Erweiterte Suche", es: "Busqueda Avanzada" },
     "search.filterByTags": { en: "Filter by Tags", it: "Filtra per Tag", fr: "Filtrer par Tags", de: "Nach Tags filtern", es: "Filtrar por Etiquetas" },
     "search.clearFilters": { en: "Clear Filters", it: "Pulisci Filtri", fr: "Effacer Filtres", de: "Filter loeschen", es: "Limpiar Filtros" },
-    "search.applyFilters": { en: "Apply", it: "Applica", fr: "Appliquer", de: "Anwenden", es: "Aplicar" }
+    "search.applyFilters": { en: "Apply", it: "Applica", fr: "Appliquer", de: "Anwenden", es: "Aplicar" },
+    "ai.gen.title": { en: "AI Assistant", it: "Assistente AI", fr: "Assistant IA", de: "KI-Assistent", es: "Asistente IA" },
+    "ai.gen.label": { en: "Generate a recipe from a description", it: "Genera una ricetta da una descrizione", fr: "Generer une recette a partir d'une description", de: "Rezept aus einer Beschreibung generieren", es: "Generar una receta a partir de una descripcion" },
+    "ai.gen.placeholder": { en: "e.g. A vegan chocolate cake for 6 people...", it: "es. Una torta al cioccolato vegana per 6 persone...", fr: "ex. Un gateau au chocolat vegan pour 6 personnes...", de: "z.B. Ein veganer Schokoladenkuchen fuer 6 Personen...", es: "ej. Un pastel de chocolate vegano para 6 personas..." },
+    "ai.gen.button": { en: "Generate", it: "Genera", fr: "Generer", de: "Generieren", es: "Generar" },
+    "ai.gen.enterPrompt": { en: "Describe the recipe you want to create", it: "Descrivi la ricetta che vuoi creare", fr: "Decrivez la recette que vous souhaitez creer", de: "Beschreiben Sie das Rezept, das Sie erstellen moechten", es: "Describa la receta que desea crear" },
+    "ai.gen.generating": { en: "Generating recipe with AI...", it: "Generazione ricetta con AI...", fr: "Generation de la recette avec IA...", de: "Rezept wird mit KI generiert...", es: "Generando receta con IA..." },
+    "ai.gen.success": { en: "Recipe generated! Review and edit as needed.", it: "Ricetta generata! Rivedi e modifica se necessario.", fr: "Recette generee! Verifiez et modifiez si necessaire.", de: "Rezept generiert! Ueberpruefen und bei Bedarf bearbeiten.", es: "Receta generada! Revise y edite segun sea necesario." },
+    "ai.gen.error": { en: "Error generating recipe. Try again.", it: "Errore nella generazione. Riprova.", fr: "Erreur de generation. Reessayez.", de: "Fehler bei der Generierung. Erneut versuchen.", es: "Error al generar. Intentelo de nuevo." },
+    "ai.improve.label": { en: "Correct & improve current recipe", it: "Correggi e migliora la ricetta corrente", fr: "Corriger et ameliorer la recette actuelle", de: "Aktuelles Rezept korrigieren und verbessern", es: "Corregir y mejorar la receta actual" },
+    "ai.improve.placeholder": { en: "e.g. Make it gluten-free, fix step 3...", it: "es. Rendila senza glutine, correggi il passo 3...", fr: "ex. Rendez-la sans gluten, corrigez l'etape 3...", de: "z.B. Glutenfrei machen, Schritt 3 korrigieren...", es: "ej. Hacerla sin gluten, corregir el paso 3..." },
+    "ai.improve.button": { en: "Improve", it: "Migliora", fr: "Ameliorer", de: "Verbessern", es: "Mejorar" },
+    "ai.improve.enterRequest": { en: "Describe what to change or improve", it: "Descrivi cosa cambiare o migliorare", fr: "Decrivez ce qu'il faut changer ou ameliorer", de: "Beschreiben Sie, was geaendert werden soll", es: "Describa que cambiar o mejorar" },
+    "ai.improve.improving": { en: "Improving recipe with AI...", it: "Miglioramento ricetta con AI...", fr: "Amelioration de la recette avec IA...", de: "Rezept wird mit KI verbessert...", es: "Mejorando receta con IA..." },
+    "ai.improve.success": { en: "Recipe improved! Review the changes.", it: "Ricetta migliorata! Rivedi le modifiche.", fr: "Recette amelioree! Verifiez les modifications.", de: "Rezept verbessert! Ueberpruefen Sie die Aenderungen.", es: "Receta mejorada! Revise los cambios." },
+    "ai.improve.error": { en: "Error improving recipe. Try again.", it: "Errore nel miglioramento. Riprova.", fr: "Erreur d'amelioration. Reessayez.", de: "Fehler bei der Verbesserung. Erneut versuchen.", es: "Error al mejorar. Intentelo de nuevo." },
+    "ai.improve.noRecipe": { en: "Add a title or ingredients first", it: "Aggiungi prima un titolo o degli ingredienti", fr: "Ajoutez d'abord un titre ou des ingredients", de: "Fuegen Sie zuerst einen Titel oder Zutaten hinzu", es: "Agregue primero un titulo o ingredientes" }
 };
 
 // ========================================

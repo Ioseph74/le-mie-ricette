@@ -133,6 +133,24 @@ function applyEditorTranslations() {
     var btnImport = document.getElementById("btnImport");
     if (btnImport) btnImport.querySelector("span").textContent = t("import.button");
 
+    // AI Assistant labels
+    var aiGenTitle = document.getElementById("aiGenerateTitle");
+    if (aiGenTitle) aiGenTitle.textContent = t("ai.gen.title");
+    var aiGenLabel = document.getElementById("aiGenLabel");
+    if (aiGenLabel) aiGenLabel.innerHTML = '<i class="fas fa-magic"></i> ' + t("ai.gen.label");
+    var aiPromptInput = document.getElementById("aiPromptInput");
+    if (aiPromptInput) aiPromptInput.placeholder = t("ai.gen.placeholder");
+    var btnAiGenText = document.getElementById("btnAiGenText");
+    if (btnAiGenText) btnAiGenText.textContent = t("ai.gen.button");
+    var aiImproveLabel = document.getElementById("aiImproveLabel");
+    if (aiImproveLabel) aiImproveLabel.innerHTML = '<i class="fas fa-spell-check"></i> ' + t("ai.improve.label");
+    var aiImproveInput = document.getElementById("aiImproveInput");
+    if (aiImproveInput) aiImproveInput.placeholder = t("ai.improve.placeholder");
+    var btnAiImproveText = document.getElementById("btnAiImproveText");
+    if (btnAiImproveText) btnAiImproveText.textContent = t("ai.improve.button");
+    var importLabel = document.getElementById("importLabel");
+    if (importLabel) importLabel.innerHTML = '<i class="fas fa-globe"></i> ' + t("import.title");
+
     // Translate category options
     var catSelect = document.getElementById("categoria");
     if (catSelect) {
@@ -871,6 +889,169 @@ function toggleTag(tag) {
         selectedTags.push(tag);
     }
     renderTags();
+}
+
+// ========================================
+// AI GENERATE RECIPE
+// ========================================
+
+async function aiGenerateRecipe() {
+    var promptInput = document.getElementById("aiPromptInput");
+    var prompt = promptInput.value.trim();
+    if (!prompt) {
+        mostraToast(t("ai.gen.enterPrompt"), "error");
+        promptInput.focus();
+        return;
+    }
+
+    var statusEl = document.getElementById("importStatus");
+    statusEl.style.display = "block";
+    statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + t("ai.gen.generating");
+
+    try {
+        var langNames = { en: "English", it: "Italian", fr: "French", de: "German", es: "Spanish" };
+        var langName = langNames[currentLanguage] || "English";
+
+        var aiPrompt = "You are a professional chef. Create a complete recipe based on this request: \"" + prompt + "\"\n" +
+            "Write ALL text in " + langName + ".\n" +
+            "Return ONLY a valid JSON object (no markdown, no explanation) with this exact structure:\n" +
+            '{"titolo":"recipe name","categoria":"one of: antipasti,primi,secondi,contorni,dolci,pane-e-lievitati,salse-e-condimenti,bevande,conserve,base",' +
+            '"difficolta":1,"tempoPreparazione":0,"tempoCottura":0,"porzioniOriginali":4,"pesoPorzione":0,' +
+            '"ingredienti":[{"nome":"ingredient name","quantita":100,"unita":"g"}],' +
+            '"preparazioni":[{"titolo":"Preparation","ingredientiUsati":[],"passi":[{"testo":"step text","foto":null}]}],' +
+            '"note":"tips and notes","valutazione":0,' +
+            '"tags":["select from: vegetarian,vegan,keto,low-carb,paleo,mediterranean,low-fat,high-protein,whole30,gluten-free,lactose-free,dairy-free,nut-free,egg-free,soy-free,sugar-free,shellfish-free,quick,no-cook,kid-friendly,light,comfort-food,meal-prep,one-pot,budget,gourmet"]}';
+
+        var response = await fetch(AI_ENDPOINT, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + AI_API_KEY
+            },
+            body: JSON.stringify({
+                model: AI_MODEL,
+                messages: [{ role: "user", content: aiPrompt }],
+                temperature: 0.7,
+                max_tokens: 4096
+            })
+        });
+
+        var data = await response.json();
+        if (!response.ok) throw new Error((data.error && data.error.message) || "API Error " + response.status);
+
+        var risposta = data.choices[0].message.content;
+        risposta = risposta.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+        var ricetta = JSON.parse(risposta);
+
+        populateFromImport(ricetta);
+        // Also populate tags if present
+        if (ricetta.tags && ricetta.tags.length > 0) {
+            selectedTags = ricetta.tags;
+            renderTags();
+        }
+
+        statusEl.style.display = "none";
+        promptInput.value = "";
+        mostraToast(t("ai.gen.success"), "success");
+    } catch (error) {
+        console.error("AI Generate error:", error);
+        statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#e53e3e;"></i> ' + (error.message || t("ai.gen.error"));
+        setTimeout(function() { statusEl.style.display = "none"; }, 6000);
+    }
+}
+
+// ========================================
+// AI IMPROVE RECIPE
+// ========================================
+
+async function aiImproveRecipe() {
+    var improveInput = document.getElementById("aiImproveInput");
+    var request = improveInput.value.trim();
+    if (!request) {
+        mostraToast(t("ai.improve.enterRequest"), "error");
+        improveInput.focus();
+        return;
+    }
+
+    sincronizzaTutto();
+
+    // Build current recipe JSON
+    var currentRecipe = {
+        titolo: document.getElementById("titolo").value.trim(),
+        categoria: document.getElementById("categoria").value,
+        difficolta: difficoltaCorrente,
+        tempoPreparazione: parseInt(document.getElementById("tempoPreparazione").value) || 0,
+        tempoCottura: parseInt(document.getElementById("tempoCottura").value) || 0,
+        porzioniOriginali: parseInt(document.getElementById("porzioniOriginali").value) || 1,
+        pesoPorzione: parseInt(document.getElementById("pesoPorzione").value) || 0,
+        ingredienti: ingredienti.filter(function(i) { return i.nome && i.nome.trim() !== ""; }),
+        preparazioni: preparazioni,
+        note: document.getElementById("note").value.trim(),
+        tags: selectedTags
+    };
+
+    if (!currentRecipe.titolo && currentRecipe.ingredienti.length === 0) {
+        mostraToast(t("ai.improve.noRecipe"), "error");
+        return;
+    }
+
+    var statusEl = document.getElementById("importStatus");
+    statusEl.style.display = "block";
+    statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + t("ai.improve.improving");
+
+    try {
+        var langNames = { en: "English", it: "Italian", fr: "French", de: "German", es: "Spanish" };
+        var langName = langNames[currentLanguage] || "English";
+
+        var aiPrompt = "You are a professional chef. Here is the current recipe:\n" +
+            JSON.stringify(currentRecipe, null, 2) + "\n\n" +
+            "The user requests: \"" + request + "\"\n\n" +
+            "Apply the requested changes. Keep all existing data that doesn't need to change. " +
+            "Write ALL text in " + langName + ".\n" +
+            "Return ONLY the updated recipe as a valid JSON object (no markdown, no explanation) with this exact structure:\n" +
+            '{"titolo":"...","categoria":"...","difficolta":1,"tempoPreparazione":0,"tempoCottura":0,' +
+            '"porzioniOriginali":4,"pesoPorzione":0,' +
+            '"ingredienti":[{"nome":"...","quantita":100,"unita":"g"}],' +
+            '"preparazioni":[{"titolo":"...","ingredientiUsati":[],"passi":[{"testo":"...","foto":null}]}],' +
+            '"note":"...","valutazione":0,' +
+            '"tags":["..."]}\n' +
+            "IMPORTANT: Return the COMPLETE updated recipe, not just the changes.";
+
+        var response = await fetch(AI_ENDPOINT, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + AI_API_KEY
+            },
+            body: JSON.stringify({
+                model: AI_MODEL,
+                messages: [{ role: "user", content: aiPrompt }],
+                temperature: 0.3,
+                max_tokens: 4096
+            })
+        });
+
+        var data = await response.json();
+        if (!response.ok) throw new Error((data.error && data.error.message) || "API Error " + response.status);
+
+        var risposta = data.choices[0].message.content;
+        risposta = risposta.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+        var ricetta = JSON.parse(risposta);
+
+        populateFromImport(ricetta);
+        if (ricetta.tags && ricetta.tags.length > 0) {
+            selectedTags = ricetta.tags;
+            renderTags();
+        }
+
+        statusEl.style.display = "none";
+        improveInput.value = "";
+        mostraToast(t("ai.improve.success"), "success");
+    } catch (error) {
+        console.error("AI Improve error:", error);
+        statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#e53e3e;"></i> ' + (error.message || t("ai.improve.error"));
+        setTimeout(function() { statusEl.style.display = "none"; }, 6000);
+    }
 }
 
 function annulla() {

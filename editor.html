@@ -47,15 +47,43 @@
         <!-- LEFT COLUMN -->
         <div class="editor-col">
 
-            <!-- IMPORT FROM URL -->
+            <!-- AI GENERATE / IMPORT -->
             <section class="editor-section import-section" id="importSection">
-                <h3 class="section-title"><i class="fas fa-globe"></i> <span id="importTitle">Import from Web</span></h3>
-                <div class="import-row">
-                    <input type="text" id="importUrl" class="import-input" placeholder="Paste recipe URL...">
-                    <button class="btn-primary btn-import" onclick="importFromUrl()" id="btnImport">
-                        <i class="fas fa-download"></i> <span>Import</span>
-                    </button>
+                <h3 class="section-title"><i class="fas fa-robot"></i> <span id="aiGenerateTitle">AI Assistant</span></h3>
+                
+                <!-- Generate from prompt -->
+                <div class="ai-gen-group">
+                    <label class="ai-gen-label" id="aiGenLabel"><i class="fas fa-magic"></i> Generate a recipe from a description</label>
+                    <div class="import-row">
+                        <input type="text" id="aiPromptInput" class="import-input" placeholder="e.g. A vegan chocolate cake for 6 people...">
+                        <button class="btn-primary btn-import" onclick="aiGenerateRecipe()" id="btnAiGenerate">
+                            <i class="fas fa-wand-magic-sparkles"></i> <span id="btnAiGenText">Generate</span>
+                        </button>
+                    </div>
                 </div>
+
+                <!-- Improve existing -->
+                <div class="ai-gen-group" style="margin-top:12px;">
+                    <label class="ai-gen-label" id="aiImproveLabel"><i class="fas fa-spell-check"></i> Correct & improve current recipe</label>
+                    <div class="import-row">
+                        <input type="text" id="aiImproveInput" class="import-input" placeholder="e.g. Make it gluten-free, fix step 3...">
+                        <button class="btn-primary btn-import" onclick="aiImproveRecipe()" id="btnAiImprove">
+                            <i class="fas fa-check-double"></i> <span id="btnAiImproveText">Improve</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Import from URL -->
+                <div class="ai-gen-group" style="margin-top:12px;">
+                    <label class="ai-gen-label" id="importLabel"><i class="fas fa-globe"></i> <span id="importTitle">Import from Web</span></label>
+                    <div class="import-row">
+                        <input type="text" id="importUrl" class="import-input" placeholder="Paste recipe URL...">
+                        <button class="btn-primary btn-import" onclick="importFromUrl()" id="btnImport">
+                            <i class="fas fa-download"></i> <span>Import</span>
+                        </button>
+                    </div>
+                </div>
+
                 <div id="importStatus" class="import-status" style="display:none;"></div>
             </section>
 
